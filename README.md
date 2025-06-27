@@ -15,7 +15,7 @@
 
 ## About the Game 🎮
 
-**Floodead** is a browser-based horror survival game built using **Three.js**, a 3D graphics library that runs directly in the browser via WebGL. The game simulates a haunting flood scenario enhanced by dynamic water effects, fog, eerie lighting, and real-time monster AI. Built with JavaScript and shaders, this experience offers tension, atmosphere, and exploration — all in the browser.
+**Floodead** is a browser-based horror survival game developed as a project for my Game Development class during my third year as a Computer Science student. Built using Three.js, a 3D graphics library that runs directly in the browser via WebGL, the game simulates a haunting flood scenario enhanced by dynamic water effects, volumetric fog, eerie lighting, and real-time monster AI. Leveraging JavaScript and GLSL shaders, Floodead delivers a tense and atmospheric experience of survival and exploration — all within the browser.
 
 ---
 
