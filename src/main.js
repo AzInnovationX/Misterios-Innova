@@ -10,9 +10,11 @@ import { GUI } from 'dat.gui'; // Import dat.GUI
 const boundaryMinX = -50; // Minimum X boundary
 const boundaryMaxX = 50;  // Maximum X boundary
 const boundaryMinY = 0;   // Minimum Y boundary (ground level)
-const boundaryMaxY = 20;  // Maximum Y boundary (height limit)
+const boundaryMaxY = 10;  // Maximum Y boundary (height limit)
 const boundaryMinZ = -50; // Minimum Z boundary
 const boundaryMaxZ = 50;  // Maximum Z boundary
+
+
 
 
 function checkPlayerBounds(playerPosition) {
@@ -35,7 +37,7 @@ function resetPlayerPosition() {
 
 
 const scene = new THREE.Scene();
-//scene.background = new THREE.Color(0x2f303d); // Default background color
+scene.background = new THREE.Color(0xffffff); // Default background color
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -47,7 +49,7 @@ const textureLoader = new THREE.TextureLoader();
 //================================================================
 // Fog Setup
 //================================================================
-let fogDensity = 0.06; // Adjusted density for fog
+let fogDensity = 0.08; // Adjusted density for fog
 let fogColor = new THREE.Color(0x000000); // Set initial fog color (black)
 scene.fog = new THREE.FogExp2(fogColor, fogDensity); // Exponential fog (color, density)
 
@@ -56,10 +58,11 @@ scene.fog = new THREE.FogExp2(fogColor, fogDensity); // Exponential fog (color, 
 //================================================================
 // Lighting Setup
 //================================================================
-const ambientLight = new THREE.AmbientLight(0x635900, 0.1); // Ambient light to illuminate all objects
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Ambient light to illuminate all objects
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0x635900, 0.010); // White directional light
+//0x635900
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.010); // White directional light
 directionalLight.position.set(-15.36, -50, 50).normalize(); // Light source position
 scene.add(directionalLight);
 
@@ -84,7 +87,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap; // For softer shadows
 
 */
 
-const localizedDirectionalLight = new THREE.DirectionalLight(0xffcc00, 1.0);
+const localizedDirectionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
 
 // Position it in your specific area
 localizedDirectionalLight.position.set(-15.36, -50, 50); // Position it at (-115, -39, -40)
@@ -233,7 +236,7 @@ const frontWallMaterial = new THREE.MeshStandardMaterial({
 });
 const frontWall = new THREE.Mesh(new THREE.BoxGeometry(100, 40, 1), frontWallMaterial);
 frontWall.position.z = -50;
-frontWall.castShadow = true;
+frontWall.castShadow = false;
 frontWall.receiveShadow = true;
 scene.add(frontWall);
 
@@ -251,7 +254,7 @@ const backWallMaterial = new THREE.MeshStandardMaterial({
 });
 const backWall = new THREE.Mesh(new THREE.BoxGeometry(100, 40, 1), backWallMaterial);
 backWall.position.z = 50;
-backWall.castShadow = true;
+backWall.castShadow = false;
 backWall.receiveShadow = true;
 scene.add(backWall);
 
@@ -271,7 +274,7 @@ const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), leftWallMater
 leftWall.position.set(-52, 2, -1);
 leftWall.scale.set(1, 2, 0.6);
 
-leftWall.castShadow = true;
+leftWall.castShadow = false;
 leftWall.receiveShadow = true;
 scene.add(leftWall);
 
@@ -291,7 +294,7 @@ const left1Wall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), left1WallMat
 left1Wall.scale.set(8, 0.3, 0.3);
 left1Wall.position.set(-44, 20, 35);
 
-left1Wall.castShadow = true;
+left1Wall.castShadow = false;
 left1Wall.receiveShadow = true;
 scene.add(left1Wall);
 
@@ -309,7 +312,7 @@ const rightWallMaterial = new THREE.MeshStandardMaterial({
 });
 const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), rightWallMaterial);
 rightWall.position.x = 50;
-rightWall.castShadow = true;
+rightWall.castShadow = false;
 rightWall.receiveShadow = true;
 scene.add(rightWall);
 
@@ -586,15 +589,31 @@ const ENT2TextureMaterial = new THREE.MeshStandardMaterial({
 });
 const ENT2 = new THREE.Mesh(new THREE.BoxGeometry(40, 35, 1), ENT2TextureMaterial);
 
-ENT2.position.set(14, 2, -30); // Set position
+ENT2.position.set(-36, 2, -30); // Set position
                     //nipis     //width    //heigh
-                    ENT2.scale.set(0.5, 1, 2); // Shrink width to create space for the door
+                    ENT2.scale.set(3, 1, 2); // Shrink width to create space for the door
                     ENT2.receiveShadow = true;
 scene.add(ENT2);
 
 
+const ENT22Texture = textureLoader.load('/images/texture/tile.jpg'); // Same texture as floor
+ENT22Texture .wrapS = THREE.RepeatWrapping;
+ENT22Texture .wrapT = THREE.RepeatWrapping;
+ENT22Texture .repeat.set(30, 10); // Adjust the repeat scale
 
+const ENT22TextureMaterial = new THREE.MeshStandardMaterial({ 
+    map: ENT22Texture , 
+    side: THREE.DoubleSide, 
+    roughness: 0, 
+    metalness: 0.5
+});
+const ENT22 = new THREE.Mesh(new THREE.BoxGeometry(40, 35, 1), ENT2TextureMaterial);
 
+ENT22.position.set(-36, 2, -50); // Set position
+                    //nipis     //width    //heigh
+                    ENT22.scale.set(3, 1, 2); // Shrink width to create space for the door
+                    ENT22.receiveShadow = true;
+scene.add(ENT22);
 
 
 //================================================================
@@ -645,7 +664,7 @@ const fogColorControl = fogFolder.addColor({ fogColor: fogColor.getHex() }, 'fog
 function hideGUI() {
   const guiContainer = document.querySelector('.dg.ac'); // Default class for dat.GUI
   if (guiContainer) {
-    guiContainer.style.display = 'none';
+    guiContainer.style.display = '1';
   }
 }
 
@@ -659,7 +678,7 @@ fogFolder.close();
 
 // Set camera position
 // Set camera position
-camera.position.set(39, 4,5);
+camera.position.set(48, -26, 42);
 //camera.position.set(-12, 14,41);
 // Rotate camera to look downward (45 degrees downward)
 camera.rotation.x = -Math.PI / 3; // Convert 45 degrees to radians (downward tilt)
@@ -775,7 +794,7 @@ class FPSControls {
           this.move.up = true;
         } else if (this.isStanding) {
           this.velocity.y += 12; // Adjust jump height as needed
-          this.isStanding = false;
+          this.isStanding = true;
         }
         break;
       case 'ShiftLeft': // Move down in Edit Mode
@@ -953,7 +972,8 @@ let waterMixer;  // Declare a global mixer variable
 loader.load('/images/models/water_wave_for_ar.glb', (gltf) => {
   water1 = gltf.scene;
   water1.scale.set(0.3, 0.3, 0.31);
-  water1.position.set(20, 24, 20); // Starting position of the water
+  //use 21.7
+  water1.position.set(20, 21.7, 20); // Starting position of the water
   water1.castShadow = true;
   water1.receiveShadow = true;
     scene.add(water1);
@@ -1031,7 +1051,7 @@ const waterFragmentShader = `
 
 
     // Add ambient light effect
-    color += ambientLightColor * 0.2;  // Lightens the water
+    color += ambientLightColor * 1;  // Lightens the water
 
     // Set the alpha value for transparency
     gl_FragColor = vec4(color, 0.1); // Adjust alpha as needed
@@ -1066,17 +1086,18 @@ const waterMaterial = new THREE.ShaderMaterial({
 
 // --------------------------------------------------------------------------------[Water Geometry]
 
-const waterGeometry = new THREE.PlaneGeometry(900, 900, 512, 512); // Increase segments for better wave definition
+const waterGeometry = new THREE.PlaneGeometry(900, 900, 64, 64); // Increase segments for better wave definition
 
 // --------------------------------------------------------------------------------[Water Mesh Setup]
 
 const water = new THREE.Mesh(waterGeometry, waterMaterial);
 water.rotation.x = -Math.PI * 0.5; // Rotate water to lie flat
-water.position.set(0, 2.5, 0); 
+//water.position.set(0, 2.5, 0); 
+water.position.set(0, -50, 0);
 water.scale.set(0.130, 0.130, 0.130); // Position the water at the bottom
 water.receiveShadow = true; // Make sure the water receives shadows
 water.castShadow = true;
-scene.add(water); // Add the water to the scene
+//scene.add(water); // Add the water to the scene
 
 
 
@@ -1152,7 +1173,39 @@ scene.add(noteWall);
 
 
 
+// ── Flashlight toggle state ──
+let flashlightOn = false;
+let flashlightCooldown = false;
+let flashlightOverlay = null;
 
+// ── Create the overlay text element ──
+function createFlashlightOverlay() {
+  flashlightOverlay = document.createElement('div');
+  flashlightOverlay.style.position = 'fixed';
+  flashlightOverlay.style.bottom = '30px';
+  flashlightOverlay.style.left = '50%';
+  flashlightOverlay.style.transform = 'translateX(-50%)';
+  flashlightOverlay.style.color = 'white';
+  flashlightOverlay.style.fontSize = '18px';
+  flashlightOverlay.style.fontFamily = 'Courier New, monospace';
+  flashlightOverlay.style.backgroundColor = 'rgba(0,0,0,0.6)';
+  flashlightOverlay.style.padding = '8px 18px';
+  flashlightOverlay.style.borderRadius = '6px';
+  flashlightOverlay.style.pointerEvents = 'none';
+  flashlightOverlay.style.display = 'none';
+  flashlightOverlay.style.zIndex = '500';
+  document.body.appendChild(flashlightOverlay);
+}
+createFlashlightOverlay();
+
+function showFlashlightMessage(msg, duration = 2000) {
+  flashlightOverlay.innerText = msg;
+  flashlightOverlay.style.display = 'block';
+  clearTimeout(flashlightOverlay._timeout);
+  flashlightOverlay._timeout = setTimeout(() => {
+    flashlightOverlay.style.display = 'none';
+  }, duration);
+}
 
 
 
@@ -1210,7 +1263,7 @@ function triggerRedFlicker() {
 }
 
 // Attack sound setup
-const attackSound = new Audio('/sounds/Monsterscream.mp3');
+const attackSound = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
 attackSound.volume = 1; // Max volume
 attackSound.playbackRate = 2; // Slightly increase playback speed for intensity
 
@@ -1285,8 +1338,15 @@ function onZombieAttack() {
   // Start the shake and zoom effects
   shakeCamera();
   zoomCamera();
+
+   setTimeout(() => {
+    gameOver();
+  }, 550); // slightly longer than shakeDuration (0.2s)
 }
 
+
+let lastAttackTime = 0;
+const attackCooldown = 1.5; // seconds between attacks
 //================================================================
 // Zombie Movement (AI Behavior)
 //================================================================
@@ -1298,9 +1358,58 @@ let currentTarget = new THREE.Vector3();  // Current target position for the zom
 let isMovingToTarget = false;  // Flag to track if the zombie is moving to a new target
 const wanderDistance = 50; // Distance at which the zombie starts wandering
 
-// Update zombie state and movement
-function updateZombie() {
+// Update zombie state and movement //freeze distance
+function isPlayerLookingAtZombie({ fovCos = Math.cos(THREE.MathUtils.degToRad(35)), maxDistance = 50 } = {}) {
+  if (!zombie) return false;
+
+  const camPos = camera.position;
+  const zomPos = zombie.position;
+
+  const toZombie = new THREE.Vector3().subVectors(zomPos, camPos);
+  const dist = toZombie.length();
+  if (dist === 0) return true;
+  if (dist > maxDistance) return false;
+
+  toZombie.normalize();
+
+  const camForward = new THREE.Vector3();
+  camera.getWorldDirection(camForward);
+
+  const dot = camForward.dot(toZombie);
+  return dot >= fovCos;
+}
+
+function updateZombie(delta) {
   if (zombie) {
+    if (isPlayerLookingAtZombie()) {
+      if (mixer) mixer.timeScale = 0;
+      console.log(`[ZOMBIE] FROZEN — player is looking | dist: ${camera.position.distanceTo(zombie.position).toFixed(2)}`);
+      return; // freeze while player is looking at the zombie
+    }
+// ── STUCK DETECTION ──────────────────────────────
+const distanceMoved = zombie.position.distanceTo(zombieLastPosition);
+if (distanceMoved < 0.3) {
+    zombieStuckTimer += delta; // ← use the delta already gotten at top of animate()
+} else {
+    zombieStuckTimer = 0;
+}
+zombieLastPosition.copy(zombie.position);
+
+if (zombieStuckTimer >= STUCK_THRESHOLD) {
+    console.log('[ZOMBIE] STUCK 10s — resetting position');
+    zombie.position.set(
+        Math.random() * 40 - 20,
+        5,
+        Math.random() * 40 - 20
+    );
+    zombieStuckTimer = 0;
+    zombieState = "patrolling";
+    isMovingToTarget = false;
+    return;
+}
+// ─────────────────────────────────────────────────
+
+  if (mixer) mixer.timeScale = 0.7;
     const playerPosition = camera.position;
     const zombiePosition = zombie.position;
     const distanceToPlayer = playerPosition.distanceTo(zombiePosition);
@@ -1312,46 +1421,56 @@ function updateZombie() {
 
 
 
-    
     switch (zombieState) {
       case "patrolling":
         patrolRandomly();
+        console.log(`[ZOMBIE] PATROLLING | dist: ${distanceToPlayer.toFixed(2)} | triggers stalking at < 32`);
         if (distanceToPlayer < 32) {
-          zombieState = "chasing"; // Start chasing if within range
+          zombieState = "stalking";
+        }
+        break;
+
+      case "stalking":
+        stalkPlayer(direction, distanceToPlayer);
+        zombie.position.y = -0.6;
+        console.log(`[ZOMBIE] STALKING | dist: ${distanceToPlayer.toFixed(2)} | chase at < 10, back to patrol at > 25`);
+        if (distanceToPlayer < 10) {
+          zombieState = "chasing";
+        } else if (distanceToPlayer > 33) {
+          zombieState = "patrolling";
+          isMovingToTarget = false;
         }
         break;
 
       case "chasing":
         chasePlayer(direction, distanceToPlayer);
-        if (distanceToPlayer < 5) {
-        
-          zombieState = "attacking"; // Attack if extremely close
-        } else if (distanceToPlayer > 50) {
-          zombieState = "patrolling"; // Return to patrol if too far away
-          isMovingToTarget = false;  // Reset movement flag to trigger new patrol target
-        } else if (distanceToPlayer > wanderDistance) {
-          zombieState = "wandering"; // Start wandering if player is far away
+        zombie.position.y = -0.6;
+        console.log(`[ZOMBIE] CHASING | dist: ${distanceToPlayer.toFixed(2)} | attack at < 5, back to stalking at > 20`);
+        if (distanceToPlayer < 7) {
+          zombieState = "attacking";
+        } else if (distanceToPlayer > 20) {
+          zombieState = "stalking";
         }
-        
         break;
 
       case "attacking":
-        onZombieAttack(); // Trigger red flicker effect when attacking
-        if (distanceToPlayer < 1) {
-          gameOver(); // Trigger game over if zombie catches player
-        } else if (distanceToPlayer > 30) {
-          zombieState = "chasing"; // Continue chasing if player is still close
-          damageOverlay.style.opacity = '0'; // Stop the red flicker when player is too far
-        } else if (distanceToPlayer > 5) {
-          zombieState = "chasing"; // Stop attacking and go back to chasing
-          damageOverlay.style.opacity = '0'; // Stop the red flicker
+        const now = clock.getElapsedTime();
+        console.log(`[ZOMBIE] ATTACKING | dist: ${distanceToPlayer.toFixed(2)} | cooldown: ${(attackCooldown - (now - lastAttackTime)).toFixed(1)}s left`);
+        if (now - lastAttackTime > attackCooldown) {
+          onZombieAttack();
+          lastAttackTime = now;
+        }
+        if (distanceToPlayer > 5) {
+          zombieState = "chasing";
+          damageOverlay.style.opacity = '0';
         }
         break;
 
       case "wandering":
         wanderRandomly();
+        console.log(`[ZOMBIE] WANDERING | dist: ${distanceToPlayer.toFixed(2)}`);
         if (distanceToPlayer < wanderDistance) {
-          zombieState = "chasing"; // Return to chasing if player is within range
+          zombieState = "chasing";
         }
         break;
     }
@@ -1359,13 +1478,12 @@ function updateZombie() {
 }
 
 
-
 //================================================================
 // Game Over Effect with Delay
 //================================================================
 
 let gameOverState = false; // Track the game over state
-const gameoverSound = new Audio('/sounds/Game Over Sound Effect - SFX.mp3');  // Replace with actual path
+const gameoverSound = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');  // Replace with actual path
 
 function gameOver() {
   // Stop all animations
@@ -1419,14 +1537,43 @@ setTimeout(() => {
 // Play the key collection sound
 gameoverSound.play();
 }
+function triggerFloodGameOver() {
+    // Blue screen overlay instead of blood
+    const floodOverlay = document.createElement('div');
+    floodOverlay.style.position = 'fixed';
+    floodOverlay.style.top = '0';
+    floodOverlay.style.left = '0';
+    floodOverlay.style.width = '100%';
+    floodOverlay.style.height = '100%';
+    floodOverlay.style.backgroundColor = 'rgba(0, 50, 150, 0.7)';
+    floodOverlay.style.zIndex = '999';
+    document.body.appendChild(floodOverlay);
 
+    // Game over message
+    const gameOverMessage = document.createElement('div');
+    gameOverMessage.style.position = 'fixed';
+    gameOverMessage.style.top = '50%';
+    gameOverMessage.style.left = '50%';
+    gameOverMessage.style.transform = 'translate(-50%, -50%)';
+    gameOverMessage.style.fontSize = '48px';
+    gameOverMessage.style.fontFamily = 'Courier New, Courier, monospace';
+    gameOverMessage.style.color = 'white';
+    gameOverMessage.style.fontWeight = 'bold';
+    gameOverMessage.style.textAlign = 'center';
+    gameOverMessage.style.zIndex = '1000';
+    gameOverMessage.innerHTML = 'YOU DROWNED<br><span style="font-size:24px">Press Ctrl + R to restart</span>';
+    document.body.appendChild(gameOverMessage);
+
+    // Stop the game loop
+    gameOverState = true;
+}
 
 //================================================================
 // Game Restart Function
 //================================================================
 function restartGame() {
   // Reset game state
-  zombie.position.set(-40, 0, 20); // Reset zombie position
+  zombie.position.set(0, 0, 0); // Reset zombie position
   camera.position.set(0, 14, 24); // Reset camera position
   zombieState = "patrolling"; // Reset zombie state
   isZombieMoving = true; // Enable zombie movement
@@ -1451,65 +1598,128 @@ function restartGame() {
 
 
 
-
-
-// Patrol randomly within the square area
 function patrolRandomly() {
   if (!isMovingToTarget) {
-    // Set a random target within the defined area
     currentTarget.set(
-      Math.random() * (maxX - minX) + minX,  // Random x within the range
-      0,  // Y remains constant (since this is a flat 2D plane for movement)
-      Math.random() * (maxZ - minZ) + minZ   // Random z within the range
+      Math.random() * (maxX - minX) + minX,
+      0,
+      Math.random() * (maxZ - minZ) + minZ
     );
-    isMovingToTarget = true;  // Start moving to the new target
+    isMovingToTarget = true;
   }
 
-  // Move zombie towards the target
   const distanceToTarget = zombie.position.distanceTo(currentTarget);
-  
+
   if (distanceToTarget < 1) {
-    // If the zombie reaches the target, stop moving and pick a new target
     isMovingToTarget = false;
     currentTarget.set(
-      Math.random() * (maxX - minX) + minX,  // Random x within the range
-      0,  // Y remains constant (since this is a flat 2D plane for movement)
-      Math.random() * (maxZ - minZ) + minZ   // Random z within the range
+      Math.random() * (maxX - minX) + minX,
+      0,
+      Math.random() * (maxZ - minZ) + minZ
     );
   } else {
-    // Move towards the target
     const direction = new THREE.Vector3();
     direction.subVectors(currentTarget, zombie.position).normalize();
 
-    // Update zombie's rotation to face the target
-    const angle = Math.atan2(direction.x, direction.z);  // Calculate the angle
-    zombie.rotation.y = angle;  // Make the zombie face the target
+    const angle = Math.atan2(direction.x, direction.z);
+    zombie.rotation.y = angle;
 
-    const patrolSpeed = 0.04;  // Patrol speed
-    zombie.position.addScaledVector(direction, patrolSpeed);  // Move towards the target
+    const previousPosition = zombie.position.clone();
+    zombie.position.addScaledVector(direction, 0.04);
+
+    const zombieBox = new THREE.Box3().setFromCenterAndSize(
+      zombie.position,
+      new THREE.Vector3(2, 4, 2)
+    );
+
+    let hitWall = false;
+    for (const wallBox of zombieWallBoxes) {
+      if (zombieBox.intersectsBox(wallBox)) {
+        hitWall = true;
+        break;
+      }
+    }
+
+    if (hitWall) {
+      zombie.position.copy(previousPosition);
+      isMovingToTarget = false;
+    }
   }
 
-  // Optional: Randomly rotate slightly to simulate looking around
   if (Math.random() < 0.04) {
-    zombie.rotation.y += (Math.random() - 0.5) * Math.PI / 4; // Randomly adjust rotation
+    zombie.rotation.y += (Math.random() - 0.5) * Math.PI / 4;
   }
 }
+
+function stalkPlayer(direction, distanceToPlayer) {
+  if (isPlayerLookingAtZombie()) return;
+
+ const previousPosition = zombie.position.clone();
+  zombie.position.addScaledVector(direction, 0.090 * zombieMoveSpeedMultiplier);
+
+  const zombieBox = new THREE.Box3().setFromCenterAndSize( // ← ADD
+    zombie.position,
+    new THREE.Vector3(2, 4, 2)
+  );
+ for (const wallBox of zombieWallBoxes) {              // ← ADD
+    if (zombieBox.intersectsBox(wallBox)) {
+      zombie.position.copy(previousPosition);
+      break;
+    }
+  }
+
+  const angle = Math.atan2(direction.x, direction.z);
+  zombie.rotation.y = angle;
+  zombie.rotation.x = 0;
+  zombie.rotation.z = 0;
+  zombie.position.y = 3;
+
+  const volume = THREE.MathUtils.clamp(0.3 - distanceToPlayer / 80, 0, 0.3);
+  zombieSound1.volume = volume;
+  zombieSound2.volume = volume;
+  if (zombieSound1.paused) zombieSound1.play();
+  if (zombieSound2.paused) zombieSound2.play();
+}
+
+
 
 // Chase the player
 function chasePlayer(direction, distanceToPlayer) {
-  if (distanceToPlayer < 10) {
-    zombie.position.addScaledVector(direction, 0.04); // Speed up when closer to the player
-    zombie.lookAt(camera.position); // Always face the player
+  let speed = 0.04;
+  if (distanceToPlayer < 15) speed = 0.07;
+  if (distanceToPlayer < 8)  speed = 0.11;
+   speed *= zombieMoveSpeedMultiplier;
 
-    // Ensure zombie remains upright during chase
-    zombie.rotation.x = 0;  // Lock tilt on X-axis
-    zombie.rotation.z = 0;  // Lock tilt on Z-axis
+  const previousPosition = zombie.position.clone();       // ← ADD
+  zombie.position.addScaledVector(direction, speed);
+
+  const zombieBox = new THREE.Box3().setFromCenterAndSize( // ← ADD
+    zombie.position,
+    new THREE.Vector3(2, 4, 2)
+  );
+for (const wallBox of zombieWallBoxes) {              // ← ADD
+    if (zombieBox.intersectsBox(wallBox)) {
+      zombie.position.copy(previousPosition);
+      break;
+    }
   }
 
-  // Ensure zombie stays on the ground (y = 0)
-  zombie.position.y = 0.8; // Adjust this value based on your scene
-}
+  zombie.lookAt(camera.position);
+  zombie.rotation.x = 0;
+  zombie.rotation.z = 0;
+  zombie.position.y = 7;
 
+  const volume = THREE.MathUtils.clamp(1 - distanceToPlayer / 26, 0, 1);
+  zombieSound1.volume = volume;
+  zombieSound2.volume = volume;
+  if (distanceToPlayer <= 26) {
+    if (zombieSound1.paused) zombieSound1.play();
+    if (zombieSound2.paused) zombieSound2.play();
+  } else {
+    zombieSound1.pause();
+    zombieSound2.pause();
+  }
+}
 // Wander randomly within the defined area
 function wanderRandomly() {
   if (!isMovingToTarget) {
@@ -1552,30 +1762,89 @@ function wanderRandomly() {
   }
 }
 
+
+
+
 //================================================================
 // Character (Zombie) Setup
 //================================================================
+let zombie, zombie2, mixer;
+let zombieMoveSpeedMultiplier = 1;
+let zombieStuckTimer = 0;
+let zombieLastPosition = new THREE.Vector3();
+const STUCK_THRESHOLD = 10; // seconds
+const STUCK_DISTANCE = 0.5; // how little movement = "stuck"
 
-let zombie, mixer;
+// ── helper to load a zombie model and swap it in ──────────────────
+function loadZombieModel(path, scale, position, animSpeed = 1, moveSpeedMultiplier = 1, onLoaded) {
+    loader.load(path, (gltf) => {
+        const newZombie = gltf.scene;
+        newZombie.scale.set(...scale);
+        newZombie.position.copy(position || new THREE.Vector3(0, 5, 0));
+        newZombie.castShadow = true;
+        newZombie.receiveShadow = true;
 
-loader.load('/images/models/character_spiderwatch_wrangler_-_take_two.glb', (gltf) => {
-  zombie = gltf.scene;
-  zombie.scale.set(5.5, 5.5, 5.5);
-  zombie.position.set(-70, 0, 70); // Starting position of the zombie
-  zombie.castShadow = true;
-  zombie.receiveShadow = true;
-  scene.add(zombie);
+        newZombie.traverse((child) => {
+            if (child.isMesh) {
+                child.material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    metalness: 0.2,
+                    roughness: 0.6,
+                    side: THREE.DoubleSide
+                });
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
 
-  // Initialize the animation mixer for the zombie
-  mixer = new THREE.AnimationMixer(zombie);
+        if (mixer) mixer.stopAllAction();
+        if (zombie) scene.remove(zombie);
 
-  gltf.animations.forEach((clip) => {
-    const action = mixer.clipAction(clip);
-    action.play(); // Play animations
-    action.timeScale = 0.5; // Slow down the animation by 50%
-  });
-});
+        zombie = newZombie;
+        scene.add(zombie);
 
+        zombieMoveSpeedMultiplier = moveSpeedMultiplier; // ← NEW
+
+        mixer = new THREE.AnimationMixer(zombie);
+        gltf.animations.forEach((clip) => {
+            const action = mixer.clipAction(clip);
+            action.play();
+            action.timeScale = animSpeed;
+        });
+
+        if (onLoaded) onLoaded();
+    });
+}
+
+
+
+// ── Load first model immediately ──────────────────────────────────
+
+// ── Load first model immediately ──────────────────────────────────
+loadZombieModel(
+    '/images/models/exaggerated_female_walk.glb',
+    [4, 5, 3],
+    new THREE.Vector3(0, 5, 0),
+    1.5,
+    1.0,
+    () => {
+        console.log('Female zombie loaded! Starting 20s timer...');
+
+        setTimeout(() => {
+            const savedPosition = zombie.position.clone();
+
+            loadZombieModel(
+                '/images/models/Running Crawl.fbx.glb',
+                [0.090, 0.090, 0.090],
+                savedPosition,
+                3.5,
+                2.0,
+                null,
+                true // make shiny black
+            );
+        }, 20000);
+    }
+);
 //================================================================
 // Input and Controls
 //================================================================
@@ -1593,15 +1862,14 @@ document.addEventListener('keydown', (event) => {
   }
 });
 // First zombie sound
-const zombieSound1 = new Audio('/sounds/gnoll sound.mp3');
+const zombieSound1 = new Audio('/sounds/Snake Hiss _ Sound Effect(MP3_160K).mp3');
 zombieSound1.loop = true; // Loop for continuous sound
 
 // Second zombie sound (can be the same sound or a different one)
-const zombieSound2 = new Audio('/sounds/Walk-mont.mp3');
+const zombieSound2 = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
 zombieSound2.loop = true; // Loop for continuous sound
 
 function zombieFollowPlayer() {
-  if (isZombieMoving && zombie) {
     const playerPosition = camera.position;
     const zombiePosition = zombie.position;
 
@@ -1612,7 +1880,7 @@ function zombieFollowPlayer() {
 
     const distanceToPlayer = playerPosition.distanceTo(zombiePosition);
 
-    let speed = 0.030; // Base zombie speed
+    let speed = 0.150; // Base zombie speed
 
     // Adjust volume based on distance (closer = louder)
     let volume = 0;
@@ -1677,7 +1945,6 @@ function zombieFollowPlayer() {
     // Move zombie towards the player
     zombie.position.addScaledVector(direction, speed);
   }
-}
 
 
 
@@ -1693,43 +1960,110 @@ let pointLight; // For candle-like light
 
 let candleMixer;
 // Load the .glb model for the candle
-// Load the .glb model for the candle
 loader.load(
-  './images/models/copper_candlestick.glb',
+  './images/models/flashlight_electricity_lamp_the_light.glb',
   function (gltf) {
     lightObject = gltf.scene;
 
-    // Position and scale the model
-    lightObject.position.set(2.3, -3, -1.5);
-    lightObject.scale.set(21, 21, 21); 
-    lightObject.rotation.x = Math.PI / -23;
+    // ── Wrap in a group so camera's bounding box stays clean ──
+    const flashlightHolder = new THREE.Group();
+    camera.add(flashlightHolder);
 
-    // Add the model to the camera
-    camera.add(lightObject);
+    lightObject.position.set(0, 0, 9.5);
+    lightObject.scale.set(0.01, 0.01, 0.01);
+    lightObject.rotation.x = Math.PI / -2;
 
-    // Create a yellow point light (simulating candle light)
-    pointLight = new THREE.PointLight(0xFFFF00, 1, 10); // Yellow light, intensity of 1, range 10
-    pointLight.position.set(0, 0, 0); // Place it at the camera's position
-    pointLight.scale.set(110, 110, 110); 
-    camera.add(pointLight);
+    // ── Put every mesh on layer 1 so it renders on top ──
+    lightObject.traverse((child) => {
+      if (child.isMesh) {
+  child.material = child.material.clone();
 
-    // Create an AnimationMixer if the model has animations
+    child.material.map = null;
+    child.material.emissiveMap = null;
+
+    
+    child.material.emissive.set(0x32CD32);
+    child.material.emissiveIntensity = 0.3;
+
+    child.material.needsUpdate = true;
+        child.layers.set(1);           // separate layer
+        child.renderOrder = 999;       // always draw last (on top)
+        child.material = child.material.clone();
+        child.material.depthTest = false;   // never hidden behind walls
+        child.material.depthWrite = false;
+        child.raycast = () => {};      // disable collision raycasting
+      }
+    });
+
+    flashlightHolder.add(lightObject);
+
+    // ── Point light stays on default layer ──
+    pointLight = new THREE.PointLight(0xff0000, 1, 10);
+    pointLight.position.set(0, 0, -1);
+    // NO scale.set() on lights — it does nothing and inflates bounding box
+    flashlightHolder.add(pointLight);
+
+    // ── Tell camera to also render layer 1 ──
+    camera.layers.enable(1);
+
+    // ── Start hidden ──
+    lightObject.visible = false;
+    pointLight.visible = false;
+
+    // ── F key toggle ──
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'KeyF') return;
+      if (flashlightCooldown) return; // still cooling down, do nothing
+
+      if (!flashlightOn) {
+        // Turn ON
+        flashlightOn = true;
+        lightObject.visible = true;
+        pointLight.visible = true;
+        showFlashlightMessage('🔦 Flashlight ON', 1500);
+
+        // Auto turn off after 5s and start cooldown
+        setTimeout(() => {
+          flashlightOn = false;
+          lightObject.visible = false;
+          pointLight.visible = false;
+          flashlightCooldown = true;
+          showFlashlightMessage('🔥 Overheat — please wait 5 seconds...', 5000);
+
+          // Cooldown ends after 5s
+          setTimeout(() => {
+            flashlightCooldown = false;
+            showFlashlightMessage('✅ Flashlight ready', 2000);
+          }, 5000);
+        }, 5000); // flashlight stays on for 5 seconds
+
+      } else {
+        // Manual early turn off
+        flashlightOn = false;
+        lightObject.visible = false;
+        pointLight.visible = false;
+        flashlightCooldown = true;
+        showFlashlightMessage('🔥 Overheat — please wait 5 seconds...', 5000);
+
+        setTimeout(() => {
+          flashlightCooldown = false;
+          showFlashlightMessage('✅ Flashlight ready', 2000);
+        }, 5000);
+      }
+    });
+
     if (gltf.animations && gltf.animations.length) {
-      candleMixer = new THREE.AnimationMixer(lightObject); // Use candleMixer for the candle
+      candleMixer = new THREE.AnimationMixer(lightObject);
       gltf.animations.forEach((clip) => {
-        candleMixer.clipAction(clip).play(); // Play all animations
+        candleMixer.clipAction(clip).play();
       });
     }
-
-    // Optional: Log the object to check it's been added to the camera
-    console.log(lightObject);
   },
-  undefined, // Optional: onProgress callback
-  function (error) { // onError callback
+  undefined,
+  function (error) {
     console.error('An error occurred while loading the model:', error);
   }
 );
-
 
 
 
@@ -1767,7 +2101,7 @@ doorOpenSound.volume = 1.0;  // Set volume to maximum
 let keyObject;
 loader.load('/images/models/metal_credit_card.glb', function (gltf) {
   keyObject = gltf.scene; 
-  keyObject.position.set(-35, 3, 28);
+  keyObject.position.set(35, 4,30);
   keyObject.scale.set(0.4, 0.4, 0.4); 
   scene.add(keyObject);
   keyObject.rotation.x = Math.PI / 2;
@@ -2108,7 +2442,7 @@ const modelBoundingBoxes = [];
 const models = [];  // List to hold models once they are loaded
 
 // Define the shrink factor for reducing collision bounding box size
-const shrinkFactor = -33.4; // Adjust this value to reduce collision strength
+const shrinkFactor = -3; // Adjust this value to reduce collision strength
 //-1/4
 
 // Load and add chair model to the scene
@@ -2162,14 +2496,14 @@ loader.load('/images/models/old_aircon.glb', (gltf) => {
     airconBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
     modelBoundingBoxes.push(airconBox);
 });
-
+/*
 // Load and add flower model to the scene
 loader.load('/images/models/flowering_cannabis_plant_in_a_pot.glb', (gltf) => {
     flower = gltf.scene;
-    flower.position.set(26.4, 0, 35);
+    flower.position.set(30.4, 0, 31);
     flower.scale.set(0.030, 0.030, 0.030);
     flower.rotation.y = Math.PI / -2;
-    flower.castShadow = true;
+    flower.castShadow = false;
     flower.receiveShadow = true;
     scene.add(flower);
     
@@ -2178,7 +2512,7 @@ loader.load('/images/models/flowering_cannabis_plant_in_a_pot.glb', (gltf) => {
     const flowerBox = new THREE.Box3().setFromObject(flower);
     flowerBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
     modelBoundingBoxes.push(flowerBox);
-});
+});*/
 
 // Load and add frame model to the scene
 loader.load('/images/models/picture_frame.glb', (gltf) => {
@@ -2208,14 +2542,14 @@ loader.load('/images/models/isometric_office.glb', (gltf) => {
   design1.rotation.y = Math.PI / 100;
   design1.castShadow = true;
   design1.receiveShadow = true;
-  scene.add(design1);
+  //scene.add(design1);
 
   const design1ShrinkFactor = -7.2;
 
-  models.push(design1);
+  //models.push(design1);
   const design1Box = new THREE.Box3().setFromObject(design1);
   design1Box.expandByVector(new THREE.Vector3(design1ShrinkFactor, design1ShrinkFactor, design1ShrinkFactor));
-  modelBoundingBoxes.push(design1Box);
+  //modelBoundingBoxes.push(design1Box);
 
   const pushBackAmount = 0.00010;
   const bounceDamping = 0.00010;
@@ -2265,7 +2599,7 @@ loader.load('/images/models/building_hallway.glb', (gltf) => {
   design3.rotation.y = Math.PI;
   design3.castShadow = true;
   design3.receiveShadow = true;
-  scene.add(design3);
+  //scene.add(design3);
 
   const design3ShrinkFactor = -116.8;
 
@@ -2436,7 +2770,7 @@ loader.load('/images/models/water_dispenser.glb', (gltf) => {
 // Load and add abandoned office ceiling model to the scene
 loader.load('/images/models/abandoned_office_ceiling.glb', (gltf) => {
     const ceiling = gltf.scene;
-    ceiling.position.set(-149, 20, 100);
+    ceiling.position.set(-149, 40, 100);
     ceiling.scale.set(2, 2, 2);
     ceiling.rotation.y = Math.PI / 2;
     ceiling.castShadow = true;
@@ -2506,24 +2840,22 @@ loader.load('images/models/abandoned_office_ceiling.glb', (gltf) => {
 
 // Camera collision detection
 function checkCameraCollision() {
-  const cameraBox = new THREE.Box3().setFromObject(camera);
+    // Use a small manual box around just the camera position, NOT setFromObject(camera)
+    const cameraBox = new THREE.Box3().setFromCenterAndSize(
+        camera.position,
+        new THREE.Vector3(1, 1.8, 1) // player body size only
+    );
 
-  // Loop through all model bounding boxes to check for intersection
-  for (let i = 0; i < modelBoundingBoxes.length; i++) {
-      const modelBox = modelBoundingBoxes[i];
-      if (cameraBox.intersectsBox(modelBox)) {
-          // Collision detected, adjust the camera position
-          const collisionNormal = new THREE.Vector3().subVectors(camera.position, modelBox.getCenter(new THREE.Vector3())).normalize();
-
-          // Adjust the push-back to reduce the bounce effect
-          const pushBackAmount = 0.2;  // Amount to push back the camera
-          const bounceDamping = 0.1;  // Factor to reduce the bounce
-
-          // Move the camera away from the collision and apply bounce damping
-          camera.position.add(collisionNormal.multiplyScalar(pushBackAmount));
-          camera.position.add(collisionNormal.multiplyScalar(bounceDamping));  // Reduce bounce effect
-      }
-  }
+    for (let i = 0; i < modelBoundingBoxes.length; i++) {
+        const modelBox = modelBoundingBoxes[i];
+        if (cameraBox.intersectsBox(modelBox)) {
+            const collisionNormal = new THREE.Vector3()
+                .subVectors(camera.position, modelBox.getCenter(new THREE.Vector3()))
+                .normalize();
+            camera.position.add(collisionNormal.multiplyScalar(0.2));
+            camera.position.add(collisionNormal.multiplyScalar(0.1));
+        }
+    }
 }
 
 // Adding models to the bounding box array after loading
@@ -2535,28 +2867,29 @@ models.forEach(model => {
 
 
 
-  
-// After adding all walls to the scene
 const wallBoundingBoxes = [];
 
-// Assuming you have an array of wall meshes
 const walls = [frontWall, backWall, leftWall, rightWall, 
     floor , alternateFloor, LEFT1Floor , topFloor , ceiling1
     , carpet , RWSP , LWSP , TSP , ENT1 , ENT2 , texturedPasswordDoor
-    , door ,
-
-
-
-
-
-]; // Add all wall meshes here
+    , door , ENT22
+];
 
 walls.forEach(wall => {
     const box = new THREE.Box3().setFromObject(wall);
     wallBoundingBoxes.push(box);
 });
 
-
+// ✅ Zombie only collides with actual vertical walls, NOT floor/ceiling
+const zombieWallBoxes = [];
+const zombieWalls = [frontWall, backWall, leftWall, rightWall,
+    alternateFloor, LEFT1Floor, RWSP, LWSP, ENT1, ENT2, ENT22,
+    texturedPasswordDoor, door
+];
+zombieWalls.forEach(wall => {
+    const box = new THREE.Box3().setFromObject(wall);
+    zombieWallBoxes.push(box);
+});
 
 const modelPath = '/images/models/simple_mini-atm.glb';  // Path to your .glb file
 
@@ -2643,7 +2976,7 @@ function isNearDevice() {
   playerPosition = camera.position;
   const devicePosition = passwordDevice.position;
   const distance = playerPosition.distanceTo(devicePosition);
-  console.log("Distance to device:", distance);  // Log the distance to the device
+  //console.log("Distance to device:", distance);  // Log the distance to the device
   return distance <= 8;  // 8 units distance check (adjust as needed)
 }
 
@@ -2814,10 +3147,16 @@ function playDeviceInteractionSound() {
 
 
 
+// Add this OUTSIDE animate(), at the top level
+let waterRising = true;
+const waterRiseSpeed = 0.05; // adjust this to make it rise faster or slower
 
 
-
-
+walls.forEach((wall, i) => {
+  const box = new THREE.Box3().setFromObject(wall);
+  const helper = new THREE.Box3Helper(box, 0xff0000);
+  scene.add(helper);
+});
 function animate() {
   if (gameOverState) return; // Stop everything if the game is over
   requestAnimationFrame(animate);
@@ -2861,11 +3200,25 @@ function animate() {
  // Check player bounds
  checkPlayerBounds(camera.position); // Check the camera's position (player's position)
 
-  updateZombie(); // Update zombie movement
-  zombieFollowPlayer(); // Ensure the zombie follows the player
+  updateZombie(delta); // Update zombie movement
+  // Ensure the zombie follows the player
 
 
+// Rising water logic
+if (waterRising) {
+    water.position.y += waterRiseSpeed * delta;
 
+    // also rise the water1 GLB model to match
+    if (water1) {
+        water1.position.y += waterRiseSpeed * delta;
+    }
+
+    // Game over when water reaches y = 10
+    if (water.position.y >= -40.2) {
+        waterRising = false;
+        triggerFloodGameOver();
+    }
+}
 
   const playerPosition = camera.position;
 

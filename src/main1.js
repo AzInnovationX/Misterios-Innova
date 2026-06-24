@@ -3,29 +3,19 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GUI } from 'dat.gui'; // Import dat.GUI
 // Import custom object creation functions
-import { 
-    createChair, createdesk, createaircon, 
-    createflower, createframe, createdispenser, created_design1, 
-    created_design2, created_design3, created_floor, created_hallchairs,
-    created_cheaproom, created_fence, created_statue, created_ceiling,
-    created_nearstatue ,created_fallingceiling, created_dead , created_fallingdebris
-  } from './js/objects.js';
-  
 
 
   
-
-//================================================================
-// Scene Setup
-//================================================================
-
 // Define boundary limits for player movement
 const boundaryMinX = -50; // Minimum X boundary
 const boundaryMaxX = 50;  // Maximum X boundary
 const boundaryMinY = 0;   // Minimum Y boundary (ground level)
-const boundaryMaxY = 120;  // Maximum Y boundary (height limit)
+const boundaryMaxY = 200;  // Maximum Y boundary (height limit)
 const boundaryMinZ = -50; // Minimum Z boundary
 const boundaryMaxZ = 50;  // Maximum Z boundary
+
+
+
 
 function checkPlayerBounds(playerPosition) {
   if (playerPosition.x < boundaryMinX || playerPosition.x > boundaryMaxX ||
@@ -37,15 +27,17 @@ function checkPlayerBounds(playerPosition) {
 
 function resetPlayerPosition() {
   // Set the player's position to a safe location
-  camera.position.set(0, 5, 0); // Example reset position
+  camera.position.set(39, -1,-21); // Example reset position
   console.log("You have been reset to a safe location!"); // Console message
 }
-
 //================================================================
 // Scene Setup
 //================================================================
+
+
+
 const scene = new THREE.Scene();
-//scene.background = new THREE.Color(0x2f303d); // Default background color
+scene.background = new THREE.Color(0xffffff); // Default background color
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -57,9 +49,8 @@ const textureLoader = new THREE.TextureLoader();
 //================================================================
 // Fog Setup
 //================================================================
-//let fogDensity = 0.06; // Adjusted density for fog
-let fogDensity = 0; // Adjusted density for fog
-let fogColor = new THREE.Color(0x000000); // Set initial fog color (black)
+let fogDensity = 0.06; // Adjusted density for fog
+let fogColor = new THREE.Color(0xffffff); // Set initial fog color (black)
 scene.fog = new THREE.FogExp2(fogColor, fogDensity); // Exponential fog (color, density)
 
 
@@ -67,11 +58,12 @@ scene.fog = new THREE.FogExp2(fogColor, fogDensity); // Exponential fog (color, 
 //================================================================
 // Lighting Setup
 //================================================================
-const ambientLight = new THREE.AmbientLight(0xffffff, 2); // Ambient light to illuminate all objects
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // Ambient light to illuminate all objects
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 5); // White directional light
-directionalLight.position.set(50, 50, 50).normalize(); // Light source position
+//0x635900
+const directionalLight = new THREE.DirectionalLight(0x635900, 0.010); // White directional light
+directionalLight.position.set(-15.36, -50, 50).normalize(); // Light source position
 scene.add(directionalLight);
 
 renderer.shadowMap.enabled = true;
@@ -93,7 +85,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // For softer shadows
 
 
-
+*/
 
 const localizedDirectionalLight = new THREE.DirectionalLight(0xffcc00, 1.0);
 
@@ -113,10 +105,10 @@ localizedDirectionalLight.shadow.camera.far = 500;  // Set the shadow camera far
 // Add the light to the scene
 scene.add(localizedDirectionalLight);
 scene.add(localizedDirectionalLight.target);
-*/
 
 
-/*
+
+
 //================================================================
 // Sound Setup with Auto-Play Attempt
 //================================================================
@@ -163,7 +155,6 @@ playButton.onclick = playAudio;
 document.body.appendChild(playButton);
 
 
-*/
 
 
 // Load the sound effect
@@ -245,7 +236,7 @@ const frontWallMaterial = new THREE.MeshStandardMaterial({
 });
 const frontWall = new THREE.Mesh(new THREE.BoxGeometry(100, 40, 1), frontWallMaterial);
 frontWall.position.z = -50;
-frontWall.castShadow = true;
+frontWall.castShadow = false;
 frontWall.receiveShadow = true;
 scene.add(frontWall);
 
@@ -263,7 +254,7 @@ const backWallMaterial = new THREE.MeshStandardMaterial({
 });
 const backWall = new THREE.Mesh(new THREE.BoxGeometry(100, 40, 1), backWallMaterial);
 backWall.position.z = 50;
-backWall.castShadow = true;
+backWall.castShadow = false;
 backWall.receiveShadow = true;
 scene.add(backWall);
 
@@ -283,7 +274,7 @@ const leftWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), leftWallMater
 leftWall.position.set(-52, 2, -1);
 leftWall.scale.set(1, 2, 0.6);
 
-leftWall.castShadow = true;
+leftWall.castShadow = false;
 leftWall.receiveShadow = true;
 scene.add(leftWall);
 
@@ -303,7 +294,7 @@ const left1Wall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), left1WallMat
 left1Wall.scale.set(8, 0.3, 0.3);
 left1Wall.position.set(-44, 20, 35);
 
-left1Wall.castShadow = true;
+left1Wall.castShadow = false;
 left1Wall.receiveShadow = true;
 scene.add(left1Wall);
 
@@ -321,14 +312,14 @@ const rightWallMaterial = new THREE.MeshStandardMaterial({
 });
 const rightWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), rightWallMaterial);
 rightWall.position.x = 50;
-rightWall.castShadow = true;
+rightWall.castShadow = false;
 rightWall.receiveShadow = true;
 scene.add(rightWall);
 
 //================================================================
 // Ceiling and Floor Setup
 //================================================================
-/*
+
 // Ceiling
 const ceilingTexture2 = textureLoader.load('/images/texture/tile.jpg'); // Ceiling texture
 ceilingTexture2.wrapS = THREE.RepeatWrapping;
@@ -346,7 +337,7 @@ ceiling.rotation.x = Math.PI / 2;
 ceiling.position.y = 22; // Place it above the floor
 ceiling.receiveShadow = true;
 scene.add(ceiling);
-*/
+
 // Floor
 const floorTexture = textureLoader.load('/images/texture/tile.jpg'); // Floor texture (same texture as ceiling)
 floorTexture.wrapS = THREE.RepeatWrapping;
@@ -391,6 +382,7 @@ scene.add(NORMAL);
 
 
 
+
 // New Floor (Renamed to alternateFloor to avoid confusion)
 const alternateFloorTexture = textureLoader.load('/images/texture/tile.jpg'); // Same texture as floor
 alternateFloorTexture.wrapS = THREE.RepeatWrapping;
@@ -410,7 +402,6 @@ alternateFloor.position.set(33, 2, 25.3); // Set position
 alternateFloor.scale.set(0.040,         1,          22); // Shrink width to create space for the door
 alternateFloor.receiveShadow = true;
 scene.add(alternateFloor);
-
 
 
 //left
@@ -598,34 +589,31 @@ const ENT2TextureMaterial = new THREE.MeshStandardMaterial({
 });
 const ENT2 = new THREE.Mesh(new THREE.BoxGeometry(40, 35, 1), ENT2TextureMaterial);
 
-ENT2.position.set(14, 2, -30); // Set position
+ENT2.position.set(-36, 2, -30); // Set position
                     //nipis     //width    //heigh
-                    ENT2.scale.set(0.5, 1, 2); // Shrink width to create space for the door
+                    ENT2.scale.set(3, 1, 2); // Shrink width to create space for the door
                     ENT2.receiveShadow = true;
 scene.add(ENT2);
 
 
+const ENT22Texture = textureLoader.load('/images/texture/tile.jpg'); // Same texture as floor
+ENT22Texture .wrapS = THREE.RepeatWrapping;
+ENT22Texture .wrapT = THREE.RepeatWrapping;
+ENT22Texture .repeat.set(30, 10); // Adjust the repeat scale
 
-// After adding all walls to the scene
-const wallBoundingBoxes = [];
-
-// Assuming you have an array of wall meshes
-const walls = [frontWall, backWall, leftWall, rightWall, 
-    floor , alternateFloor, LEFT1Floor , topFloor , ceiling1
-    , carpet , RWSP , LWSP , TSP , ENT1 , ENT2 , 
-
-
-
-
-
-]; // Add all wall meshes here
-
-walls.forEach(wall => {
-    const box = new THREE.Box3().setFromObject(wall);
-    wallBoundingBoxes.push(box);
+const ENT22TextureMaterial = new THREE.MeshStandardMaterial({ 
+    map: ENT22Texture , 
+    side: THREE.DoubleSide, 
+    roughness: 0, 
+    metalness: 0.5
 });
+const ENT22 = new THREE.Mesh(new THREE.BoxGeometry(40, 35, 1), ENT2TextureMaterial);
 
-
+ENT22.position.set(-36, 2, -50); // Set position
+                    //nipis     //width    //heigh
+                    ENT22.scale.set(3, 1, 2); // Shrink width to create space for the door
+                    ENT22.receiveShadow = true;
+scene.add(ENT22);
 
 
 //================================================================
@@ -676,32 +664,32 @@ const fogColorControl = fogFolder.addColor({ fogColor: fogColor.getHex() }, 'fog
 function hideGUI() {
   const guiContainer = document.querySelector('.dg.ac'); // Default class for dat.GUI
   if (guiContainer) {
-    guiContainer.style.display = 'none';
+    guiContainer.style.display = '1';
   }
 }
 
 
-// Hide the GUI
+
 hideGUI();
-lightFolder.close(); // Open the lighting folder
-lightDirectionFolder.close(); // Open the light direction folder
-fogFolder.close(); // Open the fog folder
+lightFolder.close();
+lightDirectionFolder.close(); 
+fogFolder.close();
 
 
 // Set camera position
 // Set camera position
-camera.position.set(7, 14,7);
-
+camera.position.set(48, -26, 42);
+//camera.position.set(-12, 14,41);
 // Rotate camera to look downward (45 degrees downward)
-camera.rotation.x = -Math.PI / 2; // Convert 45 degrees to radians (downward tilt)
+camera.rotation.x = -Math.PI / 3; // Convert 45 degrees to radians (downward tilt)
 
 // Rotate camera 30 degrees to the left (yaw rotation)
-//camera.rotation.y = -Math.PI / 20; // Convert 30 degrees to radians (left rotation)
+camera.rotation.y = -Math.PI / 20; // Convert 30 degrees to radians (left rotation)
 
 
 
 
-// FPSControls class (integrated from your provided code)
+
 class FPSControls {
   constructor(camera, scene) {
       this.camera = camera;
@@ -713,8 +701,8 @@ class FPSControls {
       document.addEventListener('click', () => this.pointerLockControls.lock());
 
       this.velocity = new THREE.Vector3(0, 0, 0);
-      this.acceleration = new THREE.Vector3(340, 2130, 340); //speed sa player 
-      this.deceleration = new THREE.Vector3(-10, -55, -10); 
+      this.acceleration = new THREE.Vector3(40, 2130, 40);
+      this.deceleration = new THREE.Vector3(-10, -55, -10);
       this.move = { forward: false, backward: false, left: false, right: false };
       this.isStanding = true;
       this.isEditMode = false; // Track whether we are in edit mode
@@ -806,7 +794,7 @@ class FPSControls {
           this.move.up = true;
         } else if (this.isStanding) {
           this.velocity.y += 12; // Adjust jump height as needed
-          this.isStanding = false;
+          this.isStanding = true;
         }
         break;
       case 'ShiftLeft': // Move down in Edit Mode
@@ -868,6 +856,7 @@ class FPSControls {
             break; // Exit loop after collision
         }
     }
+    
 
     
     // Update camera position
@@ -881,7 +870,21 @@ class FPSControls {
         this.isStanding = true;
     }
 
-    
+/*
+    // Floating effect: Custom down and up positions
+    let time = Date.now() * 0.001; // Time for the floating effect (in seconds)
+
+    // Customize the down and up positions
+    const downPosition = 4.1;  // Lowest point (down position)
+    const upPosition = 5;     // Highest point (up position)
+
+    const floatingAmplitude = upPosition - downPosition;  // The range between up and down positions
+    const floatingFrequency = 0.5;  // Controls how fast the floating oscillates
+
+    // Sinusoidal floating effect between the custom down and up positions
+    position.y = downPosition + Math.sin(time * floatingFrequency) * floatingAmplitude;
+
+*/
 
     // Play both walking sounds when moving
     if (this.move.forward || this.move.backward || this.move.left || this.move.right) {
@@ -955,70 +958,13 @@ loader.load('/images/models/nathan_animated_003_-_walking_3d_man.glb', (gltf) =>
 
 
 
-//flood
-// --------------------------------------------------------------------------------[Water Shader for Raging Sea]
-// Vertex Shader for Water
-const waterVertexShader = `
-  uniform float time;
-  varying vec2 vUv;
-  varying float vWaveHeight;
-
-  void main() {
-    vUv = uv;
-
-    // Increase wave height by changing amplitude
-    float waveAmplitude = 12.0;  // Increase the wave height
-    float waveFrequency = 0.;  // Control wave frequency (lower = wider waves)
-
-    // Create waving effect based on sine and cosine functions
-    vec3 newPosition = position;
-    float waveHeight = sin(position.x * waveFrequency + time * 1.5) * waveAmplitude + 
-                       cos(position.z * waveFrequency + time * 1.5) * waveAmplitude;
-
-    // Apply wave height to y position
-    newPosition.y += waveHeight;
-
-    vWaveHeight = waveHeight;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
-  }
-`;
-
-
-// Fragment Shader for Water
-const waterFragmentShader = `
-  uniform float time;
-  uniform sampler2D normalMap;  // Normal map for water
-  uniform vec3 lightPosition;   // Light source position
-  uniform vec3 waterColor;      // Single color for the water
-  varying vec2 vUv;
-  varying float vWaveHeight;
-
-  void main() {
-    // Sample normal map to get water surface normals
-    vec3 normal = texture2D(normalMap, vUv).rgb;
-    normal = normalize(normal * 2.0 - 1.0); // Convert normal to [-21,1] range
-
-    // Light reflection and refraction based on wave surface
-    vec3 lightDir = normalize(lightPosition - gl_FragCoord.xyz);
-    float diff = max(dot(normal, lightDir), 0.0);
-    
-    // Combine the water color with light and shadow effects
-vec3 color = waterColor * diff * 0.8 + vec3(47.0/255.0, 56.0/255.0, 61.0/255.0) * (1.0 - diff);
 
 
 
 
-    gl_FragColor = vec4(color, 0.5); // Set the alpha value for transparency (11 for semi-transparent)
-  }
-`;
+// flood
 
-
-//flood
-
-
-
-
+// Load water model
 // Load water model
 let water1;  // Declare water globally
 let waterMixer;  // Declare a global mixer variable
@@ -1026,7 +972,7 @@ let waterMixer;  // Declare a global mixer variable
 loader.load('/images/models/water_wave_for_ar.glb', (gltf) => {
   water1 = gltf.scene;
   water1.scale.set(0.3, 0.3, 0.31);
-  water1.position.set(20, 24, 20); // Starting position of the water
+  water1.position.set(20, 21.7, 20); // Starting position of the water
   water1.castShadow = true;
   water1.receiveShadow = true;
     scene.add(water1);
@@ -1051,35 +997,198 @@ loader.load('/images/models/water_wave_for_ar.glb', (gltf) => {
   }
 });
 
+// --------------------------------------------------------------------------------[Water Shader for Raging Sea]
+// Vertex Shader for Water
+const waterVertexShader = `
+  uniform float time;
+  varying vec2 vUv;
+  varying float vWaveHeight;
+
+  void main() {
+    vUv = uv;
+
+    // Increase wave height by changing amplitude
+    float waveAmplitude = 12.0;  // Increase the wave height
+    float waveFrequency = 0.1;  // Control wave frequency (lower = wider waves)
+
+    // Create waving effect based on sine and cosine functions
+    vec3 newPosition = position;
+    float waveHeight = sin(position.x * waveFrequency + time * 1.5) * waveAmplitude + 
+                       cos(position.z * waveFrequency + time * 1.5) * waveAmplitude;
+
+    // Apply wave height to y position
+    newPosition.y += waveHeight;
+
+    vWaveHeight = waveHeight;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+  }
+`;
+
+// Fragment Shader for Water
+const waterFragmentShader = `
+  uniform float time;
+  uniform sampler2D normalMap;  // Normal map for water
+  uniform vec3 lightPosition;   // Light source position
+  uniform vec3 waterColor;      // Single color for the water
+  uniform vec3 ambientLightColor; // Ambient light color
+  varying vec2 vUv;
+  varying float vWaveHeight;
+
+  void main() {
+    // Sample normal map to get water surface normals
+    vec3 normal = texture2D(normalMap, vUv).rgb;
+    normal = normalize(normal * 2.0 - 1.0); // Convert normal to [-1,1] range
+
+    // Light reflection and refraction based on wave surface
+    vec3 lightDir = normalize(lightPosition - gl_FragCoord.xyz);
+    float diff = max(dot(normal, lightDir), 0.0);
+    
+    // Combine the water color with light and shadow effects
+  vec3 color = waterColor * diff * 0.3 + vec3(48.0/255.0, 48.0/255.0, 0.0) * (1.0 - diff);
 
 
 
+    // Add ambient light effect
+    color += ambientLightColor * 1;  // Lightens the water
+
+    // Set the alpha value for transparency
+    gl_FragColor = vec4(color, 0.1); // Adjust alpha as needed
+  }
+`;
+
+// --------------------------------------------------------------------------------[Scene Setup]
 
 // Load normal map texture for the water
-const normalTexture = textureLoader.load('/images/texture/waterNormalMap.jpg'); // Load normal map texture
+
+const normalTexture = textureLoader.load('/images/texture/water.avif'); // Load normal map texture
+
+// --------------------------------------------------------------------------------[Lighting Setup]
+
+
+// --------------------------------------------------------------------------------[Water Material Setup]
 
 const waterMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    time: { value: 0.0 },
+    normalMap: { value: normalTexture },
+    lightPosition: { value: new THREE.Vector3(0, 10, 0) }, // Set the light position
+    waterColor: { value: new THREE.Color(0x001a33) }, // Dark blue color
+    ambientLightColor: { value: new THREE.Color(0x404040) }, // Ambient light color
+  },
   vertexShader: waterVertexShader,
   fragmentShader: waterFragmentShader,
-  uniforms: {
-    time: { value: 10 },
-    normalMap: { value: normalTexture },
-    lightPosition: { value: directionalLight.position },
-    waterColor: { value: new THREE.Color(0.9, 0.9, 0.9) },
-  },
-  side: THREE.DoubleSide,
   transparent: true,
-  opacity: 0.2,
-  wireframe: false,
+  side: THREE.DoubleSide,
   depthWrite: false,
 });
 
-const waterGeometry = new THREE.PlaneGeometry(900, 900, 512, 512); // Increase segments for better wave definition
+// --------------------------------------------------------------------------------[Water Geometry]
+
+const waterGeometry = new THREE.PlaneGeometry(900, 900, 64, 64); // Increase segments for better wave definition
+
+// --------------------------------------------------------------------------------[Water Mesh Setup]
+
 const water = new THREE.Mesh(waterGeometry, waterMaterial);
 water.rotation.x = -Math.PI * 0.5; // Rotate water to lie flat
-water.position.set(0, 1.5, 0); // Position the water at the bottom
+//water.position.set(0, 2.5, 0); 
+water.position.set(0, -50, 0);
 water.scale.set(0.130, 0.130, 0.130); // Position the water at the bottom
-scene.add(water);
+water.receiveShadow = true; // Make sure the water receives shadows
+water.castShadow = true;
+//scene.add(water); // Add the water to the scene
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+//OBJECTS/TREASURES
+
+
+
+// Load the texture
+const mapTexture = textureLoader.load('/map.png'); // Left wall texture
+mapTexture.wrapS = THREE.RepeatWrapping;
+mapTexture.wrapT = THREE.RepeatWrapping;
+mapTexture.repeat.set(1, 1); // Adjust the repeat scale
+
+// Create the material
+const mapMaterial = new THREE.MeshStandardMaterial({ 
+    map: mapTexture, 
+    side: THREE.DoubleSide, 
+    roughness: 0, 
+    metalness: 0.5
+});
+
+// Create the mesh
+const mapWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), mapMaterial);
+mapWall.scale.set(.12,.17,.12);
+mapWall.position.set(23, 7,33.5);
+// Enable shadows
+mapWall.castShadow = true;
+mapWall.receiveShadow = true;
+
+// Add the mesh to the scene
+scene.add(mapWall);
+
+
+
+
+
+// Load the texture
+const noteTexture = textureLoader.load('/map/fordoorcardpaper.png'); // Paper texture
+noteTexture.wrapS = THREE.RepeatWrapping;
+noteTexture.wrapT = THREE.RepeatWrapping;
+noteTexture.repeat.set(1, 1); // Adjust the repeat scale
+
+// Create the material
+const noteMaterial = new THREE.MeshStandardMaterial({ 
+    map: noteTexture, 
+    side: THREE.DoubleSide, 
+    roughness: 0, 
+    metalness: 0.5
+});
+
+// Create the mesh
+const noteWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 100), noteMaterial);
+noteWall.scale.set(0.050, 0.050, 0.020); // Scale to resemble paper size
+noteWall.position.set(-13, 3.6, -27.4); // Slightly above the ground to avoid z-fighting
+
+// Rotate the paper to lie flat, facing up
+noteWall.rotation.x = Math.PI / 2; // Rotate 90 degrees on the X-axis to make it lie flat
+noteWall.rotation.y = Math.PI / -2;
+
+
+// Enable shadows
+noteWall.castShadow = true;
+noteWall.receiveShadow = true;
+
+// Add the mesh to the scene
+scene.add(noteWall);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1121,7 +1230,7 @@ function triggerRedFlicker() {
 }
 
 // Attack sound setup
-const attackSound = new Audio('/sounds/Monsterscream.mp3'); // Add your attack sound file here
+const attackSound = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
 attackSound.volume = 1; // Max volume
 attackSound.playbackRate = 2; // Slightly increase playback speed for intensity
 
@@ -1136,15 +1245,14 @@ function onZombieAttack() {
   zombie.rotation.x = 0;  // Reset X-axis rotation (no tilt)
   zombie.rotation.z = 0;  // Reset Z-axis rotation (no tilt)
 
- // Make the zombie's face directly toward a point lower than the camera's position when attacking
-const directionToCameraLower = new THREE.Vector3();
-directionToCameraLower.subVectors(camera.position, zombie.position);
-directionToCameraLower.y -= 1; // Lower the target by 1 unit (adjust as needed)
-directionToCameraLower.normalize();
+  // Make the zombie's face face directly toward the camera when attacking
+  const directionToCamera = new THREE.Vector3();
+  directionToCamera.subVectors(camera.position, zombie.position).normalize();
+  
+  // Calculate the angle to rotate towards the camera (Y-axis rotation)
+  const angle = Math.atan2(directionToCamera.x, directionToCamera.z);  // Use directionToCamera here
+  zombie.rotation.y = angle;
 
-// Calculate the angle to rotate towards the lower target (Y-axis rotation)
-const angleLower = Math.atan2(directionToCameraLower.x, directionToCameraLower.z); // Use directionToCameraLower here
-zombie.rotation.y = angleLower;
   // Trigger the attack animation here if any
   // For example:
   // zombieAnimation.play("attack_animation");
@@ -1211,8 +1319,32 @@ let isMovingToTarget = false;  // Flag to track if the zombie is moving to a new
 const wanderDistance = 50; // Distance at which the zombie starts wandering
 
 // Update zombie state and movement
+function isPlayerLookingAtZombie({ fovCos = Math.cos(THREE.MathUtils.degToRad(35)), maxDistance = 18 } = {}) {
+  if (!zombie) return false;
+
+  const camPos = camera.position;
+  const zomPos = zombie.position;
+
+  const toZombie = new THREE.Vector3().subVectors(zomPos, camPos);
+  const dist = toZombie.length();
+  if (dist === 0) return true;
+  if (dist > maxDistance) return false;
+
+  toZombie.normalize();
+
+  const camForward = new THREE.Vector3();
+  camera.getWorldDirection(camForward);
+
+  const dot = camForward.dot(toZombie);
+  return dot >= fovCos;
+}
+
 function updateZombie() {
   if (zombie) {
+    if (isPlayerLookingAtZombie()) {
+      return; // freeze while player is looking at the zombie
+    }
+
     const playerPosition = camera.position;
     const zombiePosition = zombie.position;
     const distanceToPlayer = playerPosition.distanceTo(zombiePosition);
@@ -1277,7 +1409,7 @@ function updateZombie() {
 //================================================================
 
 let gameOverState = false; // Track the game over state
-const gameoverSound = new Audio('/sounds/Game Over Sound Effect - SFX.mp3');  // Replace with actual path
+const gameoverSound = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');  // Replace with actual path
 
 function gameOver() {
   // Stop all animations
@@ -1331,14 +1463,43 @@ setTimeout(() => {
 // Play the key collection sound
 gameoverSound.play();
 }
+function triggerFloodGameOver() {
+    // Blue screen overlay instead of blood
+    const floodOverlay = document.createElement('div');
+    floodOverlay.style.position = 'fixed';
+    floodOverlay.style.top = '0';
+    floodOverlay.style.left = '0';
+    floodOverlay.style.width = '100%';
+    floodOverlay.style.height = '100%';
+    floodOverlay.style.backgroundColor = 'rgba(0, 50, 150, 0.7)';
+    floodOverlay.style.zIndex = '999';
+    document.body.appendChild(floodOverlay);
 
+    // Game over message
+    const gameOverMessage = document.createElement('div');
+    gameOverMessage.style.position = 'fixed';
+    gameOverMessage.style.top = '50%';
+    gameOverMessage.style.left = '50%';
+    gameOverMessage.style.transform = 'translate(-50%, -50%)';
+    gameOverMessage.style.fontSize = '48px';
+    gameOverMessage.style.fontFamily = 'Courier New, Courier, monospace';
+    gameOverMessage.style.color = 'white';
+    gameOverMessage.style.fontWeight = 'bold';
+    gameOverMessage.style.textAlign = 'center';
+    gameOverMessage.style.zIndex = '1000';
+    gameOverMessage.innerHTML = 'YOU DROWNED<br><span style="font-size:24px">Press Ctrl + R to restart</span>';
+    document.body.appendChild(gameOverMessage);
+
+    // Stop the game loop
+    gameOverState = true;
+}
 
 //================================================================
 // Game Restart Function
 //================================================================
 function restartGame() {
   // Reset game state
-  zombie.position.set(-40, 0, 20); // Reset zombie position
+  zombie.position.set(0, 0, 0); // Reset zombie position
   camera.position.set(0, 14, 24); // Reset camera position
   zombieState = "patrolling"; // Reset zombie state
   isZombieMoving = true; // Enable zombie movement
@@ -1419,8 +1580,7 @@ function chasePlayer(direction, distanceToPlayer) {
   }
 
   // Ensure zombie stays on the ground (y = 0)
-  zombie.position.y = 1; // Adjust this value based on your scene
-
+  zombie.position.y = 0.8; // Adjust this value based on your scene
 }
 
 // Wander randomly within the defined area
@@ -1469,25 +1629,42 @@ function wanderRandomly() {
 // Character (Zombie) Setup
 //================================================================
 
-let zombie, mixer;
+let zombie, zombie2, mixer;
 
-loader.load('/images/models/character_spiderwatch_wrangler_-_take_two.glb', (gltf) => {
-  zombie = gltf.scene;
-  zombie.scale.set(14, 14,14 );
-  zombie.position.set(20, 4, 20); // Starting position of the zombie
-  zombie.castShadow = true;
-  zombie.receiveShadow = true;
-  scene.add(zombie);
+loader.load('/images/models/exaggerated_female_walk.glb', (gltf) => {
+    zombie = gltf.scene;
+zombie.scale.set(5, 5, 5);
+    zombie.position.set(0, 0, 0);
+    zombie.castShadow = true;
+    zombie.receiveShadow = true;
 
-  // Initialize the animation mixer for the zombie
-  mixer = new THREE.AnimationMixer(zombie);
+    // --- Add this block to make it shiny and black ---
+    zombie.traverse((child) => {
+        if (child.isMesh) {
+            child.material = new THREE.MeshStandardMaterial({
+                color: 0x000000,      // Pure black
+                metalness: 1.0,       // Full metallic for reflection
+                roughness: 0.1,       // Low roughness for high shine
+                side: THREE.DoubleSide
+            });
+            child.castShadow = true;
+            child.receiveShadow = true;
+        }
+    });
+    // --------------------------------------------------
 
-  gltf.animations.forEach((clip) => {
-    const action = mixer.clipAction(clip);
-    action.play(); // Play animations
-    action.timeScale = 0.5; // Slow down the animation by 50%
-  });
+    scene.add(zombie);
+
+    mixer = new THREE.AnimationMixer(zombie);
+    gltf.animations.forEach((clip) => {
+        const action = mixer.clipAction(clip);
+        action.play();
+        action.timeScale = 0.5;
+    });
 });
+
+
+
 
 //================================================================
 // Input and Controls
@@ -1506,15 +1683,14 @@ document.addEventListener('keydown', (event) => {
   }
 });
 // First zombie sound
-const zombieSound1 = new Audio('/sounds/gnoll sound.mp3');
+const zombieSound1 = new Audio('/sounds/Snake Hiss _ Sound Effect(MP3_160K).mp3');
 zombieSound1.loop = true; // Loop for continuous sound
 
 // Second zombie sound (can be the same sound or a different one)
-const zombieSound2 = new Audio('/sounds/Walk-mont.mp3');
+const zombieSound2 = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
 zombieSound2.loop = true; // Loop for continuous sound
 
 function zombieFollowPlayer() {
-  if (isZombieMoving && zombie) {
     const playerPosition = camera.position;
     const zombiePosition = zombie.position;
 
@@ -1525,7 +1701,7 @@ function zombieFollowPlayer() {
 
     const distanceToPlayer = playerPosition.distanceTo(zombiePosition);
 
-    let speed = 0.030; // Base zombie speed
+    let speed = 0.30; // Base zombie speed
 
     // Adjust volume based on distance (closer = louder)
     let volume = 0;
@@ -1580,7 +1756,7 @@ function zombieFollowPlayer() {
 
     if (distanceToPlayer < 1) {
       speed = 0.2; // Increase zombie speed when very close
-      zombie.position.y = -12;
+
       // Attack player if extremely close
       if (distanceToPlayer < 5) {
         onZombieAttack(); // Trigger attack
@@ -1590,7 +1766,9 @@ function zombieFollowPlayer() {
     // Move zombie towards the player
     zombie.position.addScaledVector(direction, speed);
   }
-}
+
+
+
 
 
 
@@ -1606,20 +1784,20 @@ let candleMixer;
 // Load the .glb model for the candle
 // Load the .glb model for the candle
 loader.load(
-  '/images/models/',
+  './images/models/copper_candlestick.glb',
   function (gltf) {
     lightObject = gltf.scene;
 
     // Position and scale the model
-    lightObject.position.set(2.3, -4, -1.5);
+    lightObject.position.set(2.3, -3, -1.5);
     lightObject.scale.set(21, 21, 21); 
     lightObject.rotation.x = Math.PI / -23;
 
     // Add the model to the camera
     camera.add(lightObject);
-
+//FFFF00
     // Create a yellow point light (simulating candle light)
-    pointLight = new THREE.PointLight(0xFFFF00, 1, 10); // Yellow light, intensity of 1, range 10
+    pointLight = new THREE.PointLight(0xffffff, 1, 10); // Yellow light, intensity of 1, range 10
     pointLight.position.set(0, 0, 0); // Place it at the camera's position
     pointLight.scale.set(110, 110, 110); 
     camera.add(pointLight);
@@ -1663,9 +1841,9 @@ loader.load(
 //================================================================
 // Key Setup and Interactions
 //================================================================
-let hasKey = false;  // Flag to check if the player has the key
-let hasUsedKey = false;  // Flag to check if the key has been used
-let boundDoor = null;  // The specific door this key is bound to
+let hasKey = false;  
+let hasUsedKey = false; 
+let boundDoor = null;  
 
 // Sound effect for collecting the key
 const keyCollectSound = new Audio('/sounds/key.mp3');  // Replace with actual path
@@ -1677,9 +1855,9 @@ doorOpenSound.volume = 1.0;  // Set volume to maximum
 // Load the .glb model for the key
 let keyObject;
 loader.load('/images/models/metal_credit_card.glb', function (gltf) {
-  keyObject = gltf.scene; // The loaded key model
-  keyObject.position.set(-35, 3, 19);
-  keyObject.scale.set(0.4, 0.4, 0.4); // Adjust scale if needed
+  keyObject = gltf.scene; 
+  keyObject.position.set(35, 4,30);
+  keyObject.scale.set(0.4, 0.4, 0.4); 
   scene.add(keyObject);
   keyObject.rotation.x = Math.PI / 2;
 }, undefined, function (error) {
@@ -1766,6 +1944,7 @@ function onKeyCollected() {
 }
 
 
+
 //================================================================
 // Door Setup and Interactions
 //================================================================
@@ -1826,6 +2005,7 @@ function checkProximityToDoor(playerPosition) {
   }
 }
 
+
 // Handle "E" key press to open the door
 function onDoorPress(event) {
   if (event.key === 'e') {
@@ -1849,6 +2029,13 @@ function openDoor() {
   const animationDuration = 1; // 1-second animation
   let startTime = performance.now();
 
+  // Remove the door's collision from the wallBoundingBoxes before starting the animation
+  const doorBox = new THREE.Box3().setFromObject(door);
+  const doorIndex = wallBoundingBoxes.findIndex(box => box.equals(doorBox));
+  if (doorIndex !== -1) {
+    wallBoundingBoxes.splice(doorIndex, 1); // Remove the bounding box for the door
+  }
+
   function animateDoor() {
     const elapsedTime = (performance.now() - startTime) / 50000; // Time elapsed in seconds
     if (elapsedTime < animationDuration) {
@@ -1862,6 +2049,8 @@ function openDoor() {
   }
 
   animateDoor();
+
+
 
   // Play door open sound
   doorOpenSound.play();
@@ -1910,7 +2099,6 @@ function showNoKeyNote() {
 
 
 
-// Import necessary Three.js components
 
 import TWEEN from '@tweenjs/tween.js';
 
@@ -1972,6 +2160,490 @@ texturedPasswordDoor.scale.set(16, 6, 4);  // Example scale (width, height, dept
 
 // Add the door to the scene
 scene.add(texturedPasswordDoor);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Declare model variables in one line
+let chair
+, desk, aircon, flower, frame, dispenser,
+ design1, design2, design3, hallchairs, cheaproom,
+  fence, statue, nearstatue, dead, fallingdebris;
+
+// Array to hold model bounding boxes
+const modelBoundingBoxes = [];
+const models = [];  // List to hold models once they are loaded
+
+// Define the shrink factor for reducing collision bounding box size
+const shrinkFactor = -3; // Adjust this value to reduce collision strength
+//-1/4
+
+// Load and add chair model to the scene
+loader.load('/images/models/day_20__old_office_chair.glb', (gltf) => {
+    chair = gltf.scene;
+    chair.position.set(40, 2, -42);
+    chair.scale.set(7, 5, 5);
+    chair.rotation.x = Math.PI / 4;
+    chair.rotation.z = -Math.PI / 1.9;
+    chair.castShadow = true;
+    chair.receiveShadow = true;
+    scene.add(chair);
+    
+    // Add the chair to models and modelBoundingBoxes
+    models.push(chair);
+    const chairBox = new THREE.Box3().setFromObject(chair);
+    chairBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(chairBox);
+});
+
+// Load and add desk model to the scene
+loader.load('/images/models/office_desk.glb', (gltf) => {
+    desk = gltf.scene;
+    desk.position.set(40, 0.050, 33);
+    desk.scale.set(0.130, 0.130, 0.130);
+    desk.rotation.y = Math.PI / -1;
+    desk.castShadow = true;
+    desk.receiveShadow = true;
+    scene.add(desk);
+    
+    // Add the desk to models and modelBoundingBoxes
+    models.push(desk);
+    const deskBox = new THREE.Box3().setFromObject(desk);
+    deskBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(deskBox);
+});
+
+// Load and add air conditioner model to the scene
+loader.load('/images/models/old_aircon.glb', (gltf) => {
+    aircon = gltf.scene;
+    aircon.position.set(34, 9, 28);
+    aircon.scale.set(0.8, 0.8, 0.8);
+    aircon.rotation.y = Math.PI / -2;
+    aircon.castShadow = true;
+    aircon.receiveShadow = true;
+    scene.add(aircon);
+    
+    // Add the aircon to models and modelBoundingBoxes
+    models.push(aircon);
+    const airconBox = new THREE.Box3().setFromObject(aircon);
+    airconBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(airconBox);
+});
+/*
+// Load and add flower model to the scene
+loader.load('/images/models/flowering_cannabis_plant_in_a_pot.glb', (gltf) => {
+    flower = gltf.scene;
+    flower.position.set(30.4, 0, 31);
+    flower.scale.set(0.030, 0.030, 0.030);
+    flower.rotation.y = Math.PI / -2;
+    flower.castShadow = false;
+    flower.receiveShadow = true;
+    scene.add(flower);
+    
+    // Add the flower to models and modelBoundingBoxes
+    models.push(flower);
+    const flowerBox = new THREE.Box3().setFromObject(flower);
+    flowerBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(flowerBox);
+});*/
+
+// Load and add frame model to the scene
+loader.load('/images/models/picture_frame.glb', (gltf) => {
+    frame = gltf.scene;
+    frame.position.set(46, 0, 43);
+    frame.scale.set(1.3, 1.3, 1.3);
+    frame.rotation.y = Math.PI / -2;
+    frame.castShadow = true;
+    frame.receiveShadow = true;
+    scene.add(frame);
+    
+    // Add the frame to models and modelBoundingBoxes
+    models.push(frame);
+    const frameBox = new THREE.Box3().setFromObject(frame);
+    frameBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(frameBox);
+});
+
+
+
+
+
+loader.load('/images/models/isometric_office.glb', (gltf) => {
+  design1 = gltf.scene;
+  design1.position.set(10, 0, -30);
+  design1.scale.set(6, 5, 6);
+  design1.rotation.y = Math.PI / 100;
+  design1.castShadow = true;
+  design1.receiveShadow = true;
+  //scene.add(design1);
+
+  const design1ShrinkFactor = -7.2;
+
+  //models.push(design1);
+  const design1Box = new THREE.Box3().setFromObject(design1);
+  design1Box.expandByVector(new THREE.Vector3(design1ShrinkFactor, design1ShrinkFactor, design1ShrinkFactor));
+  //modelBoundingBoxes.push(design1Box);
+
+  const pushBackAmount = 0.00010;
+  const bounceDamping = 0.00010;
+
+  function handleCameraBounce(camera, modelBox) {
+    const cameraBox = new THREE.Box3().setFromObject(camera);
+
+    if (cameraBox.intersectsBox(modelBox)) {
+      const collisionNormal = new THREE.Vector3().subVectors(camera.position, modelBox.getCenter(new THREE.Vector3())).normalize();
+      camera.position.add(collisionNormal.multiplyScalar(pushBackAmount));
+      const velocity = new THREE.Vector3();
+      velocity.add(collisionNormal.multiplyScalar(pushBackAmount));
+      velocity.multiplyScalar(bounceDamping);
+      camera.position.add(velocity);
+    }
+  }
+
+  handleCameraBounce(camera, design1Box);
+});
+
+
+
+
+// Load and add office of a crane operator model to the scene
+loader.load('/images/models/office_of_a_crane_operator.glb', (gltf) => {
+    design2 = gltf.scene;
+    design2.position.set(-75, -1, 40);
+    design2.scale.set(7, 5, 4);
+    design2.rotation.y = Math.PI / -2;
+    design2.castShadow = true;
+    design2.receiveShadow = true;
+    scene.add(design2);
+    
+    // Add the design2 to models and modelBoundingBoxes
+    models.push(design2);
+    const design2Box = new THREE.Box3().setFromObject(design2);
+    design2Box.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(design2Box);
+});
+
+
+
+loader.load('/images/models/building_hallway.glb', (gltf) => {
+  design3 = gltf.scene;
+  design3.position.set(-115, -39, -40);
+  design3.scale.set(0.120, 0.110, 0.120);
+  design3.rotation.y = Math.PI;
+  design3.castShadow = true;
+  design3.receiveShadow = true;
+  //scene.add(design3);
+
+  const design3ShrinkFactor = -116.8;
+
+  models.push(design3);
+  const design3Box = new THREE.Box3().setFromObject(design3);
+  design3Box.expandByVector(new THREE.Vector3(design3ShrinkFactor, design3ShrinkFactor, design3ShrinkFactor));
+  modelBoundingBoxes.push(design3Box);
+
+  const pushBackAmount = 0.010;
+  const bounceDamping = 0.010;
+
+  function handleCameraBounce(camera, modelBox) {
+      const cameraBox = new THREE.Box3().setFromObject(camera);
+
+      if (cameraBox.intersectsBox(modelBox)) {
+          const collisionNormal = new THREE.Vector3().subVectors(camera.position, modelBox.getCenter(new THREE.Vector3())).normalize();
+          camera.position.add(collisionNormal.multiplyScalar(pushBackAmount));
+          const velocity = new THREE.Vector3();
+          velocity.add(collisionNormal.multiplyScalar(pushBackAmount));
+          velocity.multiplyScalar(bounceDamping);
+          camera.position.add(velocity);
+      }
+  }
+
+  handleCameraBounce(camera, design3Box);
+});
+
+
+
+
+// Load and add checkered tile floor model to the scene, but not include it for collision detection
+loader.load('/images/models/checkered_tile_floor.glb', (gltf) => {
+    floor = gltf.scene;
+    floor.traverse((child) => {
+        if (child.isMesh && child.material) {
+            child.material.roughness = 0;
+            child.material.needsUpdate = true;
+        }
+    });
+    floor.position.set(0, 1, 0);
+    floor.scale.set(0.410, 0.5, 0.450);
+    floor.rotation.y = Math.PI / -2;
+    floor.castShadow = true;
+    floor.receiveShadow = true;
+    scene.add(floor);
+});
+
+// Load and add waiting chair model to the scene
+loader.load('/images/models/waiting_chair.glb', (gltf) => {
+    hallchairs = gltf.scene;
+    hallchairs.position.set(-15, -1, 47);
+    hallchairs.scale.set(6, 6, 6);
+    hallchairs.rotation.y = Math.PI;
+    hallchairs.castShadow = true;
+    hallchairs.receiveShadow = true;
+    scene.add(hallchairs);
+    
+    // Add the hallchairs to models and modelBoundingBoxes
+    models.push(hallchairs);
+    const hallchairsBox = new THREE.Box3().setFromObject(hallchairs);
+    hallchairsBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(hallchairsBox);
+});
+
+// Load and add low poly office cubicle model to the scene
+loader.load('/images/models/low_poly_90s_office_cubicle.glb', (gltf) => {
+  cheaproom = gltf.scene;
+  cheaproom.position.set(39, -1, 6.2);
+  cheaproom.scale.set(9, 6, 9);
+  cheaproom.rotation.y = Math.PI / 2;
+  cheaproom.castShadow = true;
+  cheaproom.receiveShadow = true;
+  scene.add(cheaproom);
+  
+  // Set the specific shrink factor for this model
+  const cheaproomShrinkFactor = -7.7; // Customize the shrink factor here
+
+  // Add the cheaproom to models and modelBoundingBoxes
+  models.push(cheaproom);
+  const cheaproomBox = new THREE.Box3().setFromObject(cheaproom);
+  cheaproomBox.expandByVector(new THREE.Vector3(cheaproomShrinkFactor, cheaproomShrinkFactor, cheaproomShrinkFactor));  // Shrink collision volume
+  modelBoundingBoxes.push(cheaproomBox);
+
+  // Customizable push-back and bounce damping for this model
+  const pushBackAmount = 0.0010;  // Amount to push back the camera
+  const bounceDamping = 0.0010;  // Factor to reduce the bounce
+
+  // Update the camera position based on collision with this model
+  function handleCameraBounce(camera, modelBox) {
+      const cameraBox = new THREE.Box3().setFromObject(camera);
+
+      if (cameraBox.intersectsBox(modelBox)) {
+          // Collision detected, calculate collision normal
+          const collisionNormal = new THREE.Vector3().subVectors(camera.position, modelBox.getCenter(new THREE.Vector3())).normalize();
+          
+          // Push the camera back slightly
+          camera.position.add(collisionNormal.multiplyScalar(pushBackAmount));
+          
+          // Apply a damping effect to the bounce (if desired)
+          const velocity = new THREE.Vector3();  // You can adjust how the camera "bounces" using this vector
+          velocity.add(collisionNormal.multiplyScalar(pushBackAmount));
+          velocity.multiplyScalar(bounceDamping);  // Apply the bounce damping to reduce bounce over time
+          camera.position.add(velocity);  // Apply the velocity (adjusted by damping)
+      }
+  }
+
+  // Call this function within your game loop to check and handle the collision for this specific model
+  // Assuming you have a game loop where the camera is being updated regularly
+  handleCameraBounce(camera, cheaproomBox);
+});
+
+
+// Load and add simple metal fence model to the scene
+loader.load('/images/models/simple_metal_fence.glb', (gltf) => {
+    const fence = gltf.scene;
+    fence.position.set(-45, 7, -40);
+    fence.scale.set(1.2, 2, 1.2);
+    fence.rotation.y = Math.PI / -6;
+    fence.castShadow = true;
+    fence.receiveShadow = true;
+    scene.add(fence);
+    
+    // Add the fence to models and modelBoundingBoxes
+    models.push(fence);
+    const fenceBox = new THREE.Box3().setFromObject(fence);
+    fenceBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(fenceBox);
+});
+
+// Load and add statue of Edward Snowden model to the scene
+// Load and add statue of Edward Snowden model to the scene
+loader.load('/images/models/statue_of_edward_snowden.glb', (gltf) => {
+  const statue = gltf.scene;
+  statue.position.set(29, 7, -28);
+  statue.scale.set(2, 2, 2);
+  statue.rotation.y = Math.PI / 2;
+  statue.castShadow = true;
+  statue.receiveShadow = true;
+  scene.add(statue);
+  
+  // Set the specific shrink factor for this model
+  const statueShrinkFactor = -3; // Customize the shrink factor here
+
+  // Add the statue to models and modelBoundingBoxes
+  models.push(statue);
+  const statueBox = new THREE.Box3().setFromObject(statue);
+  statueBox.expandByVector(new THREE.Vector3(statueShrinkFactor, statueShrinkFactor, statueShrinkFactor));  // Shrink collision volume
+  modelBoundingBoxes.push(statueBox);
+});
+
+// Load and add water dispenser near statue model to the scene
+loader.load('/images/models/water_dispenser.glb', (gltf) => {
+    const nearstatue = gltf.scene;
+    nearstatue.position.set(28, 6, -18);
+    nearstatue.scale.set(3, 3, 3);
+    nearstatue.rotation.y = Math.PI / 2;
+    nearstatue.castShadow = true;
+    nearstatue.receiveShadow = true;
+    scene.add(nearstatue);
+    
+    // Add the nearstatue dispenser to models and modelBoundingBoxes
+    models.push(nearstatue);
+    const nearstatueBox = new THREE.Box3().setFromObject(nearstatue);
+    nearstatueBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+    modelBoundingBoxes.push(nearstatueBox);
+});
+
+// Load and add abandoned office ceiling model to the scene
+loader.load('/images/models/abandoned_office_ceiling.glb', (gltf) => {
+    const ceiling = gltf.scene;
+    ceiling.position.set(-149, 40, 100);
+    ceiling.scale.set(2, 2, 2);
+    ceiling.rotation.y = Math.PI / 2;
+    ceiling.castShadow = true;
+    ceiling.receiveShadow = true;
+    ceiling.traverse((child) => {
+        if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.roughness = 0;
+        }
+    });
+    scene.add(ceiling);
+    
+   
+});
+
+
+// Load and add low poly dead body model to the scene
+loader.load('/images/models/low_poly_dead_body_covered_game_ready.glb', (gltf) => {
+  const dead = gltf.scene;
+  dead.position.set(10, 1, 40.2);
+  dead.scale.set(5, 5, 5);
+  dead.rotation.y = Math.PI / 2;
+  dead.traverse((child) => {
+      if (child.isMesh) {
+          child.material = child.material.clone();
+          child.material.roughness = 1;
+      }
+  });
+  scene.add(dead);
+  
+  // Add the dead body to models and modelBoundingBoxes
+  models.push(dead);
+  const deadBox = new THREE.Box3().setFromObject(dead);
+  deadBox.expandByVector(new THREE.Vector3(shrinkFactor, shrinkFactor, shrinkFactor));  // Shrink collision volume
+  modelBoundingBoxes.push(deadBox);
+});
+
+// Load and add debris falling from ceiling model to the scene
+loader.load('/images/models/falling_debris_ceiling.glb', (gltf) => {
+  const fallingdebris = gltf.scene;
+  fallingdebris.position.set(1, 3, -40);
+  fallingdebris.scale.set(4, 6, 5);
+  fallingdebris.rotation.y = Math.PI / 2;
+  fallingdebris.castShadow = true;
+  fallingdebris.receiveShadow = true;
+  scene.add(fallingdebris);
+  
+  // Add the falling debris to models and modelBoundingBoxes
+  models.push(fallingdebris);
+  
+});
+
+// Load and add falling ceiling model to the scene
+loader.load('images/models/abandoned_office_ceiling.glb', (gltf) => {
+  const fallceiling = gltf.scene;
+  fallceiling.position.set(-27, -16.3, 54);
+  fallceiling.scale.set(1, 12, 1);
+  fallceiling.rotation.y = Math.PI / 2; // 90-degree rotation
+  fallceiling.rotation.z = Math.PI / 8; // Slight tilt by 22.5 degrees
+  fallceiling.castShadow = true;
+  fallceiling.receiveShadow = true;
+  scene.add(fallceiling);
+
+  // Add the falling ceiling to models and modelBoundingBoxes
+  models.push(fallceiling);
+});
+
+// Camera collision detection
+function checkCameraCollision() {
+  const cameraBox = new THREE.Box3().setFromObject(camera);
+
+  // Loop through all model bounding boxes to check for intersection
+  for (let i = 0; i < modelBoundingBoxes.length; i++) {
+      const modelBox = modelBoundingBoxes[i];
+      if (cameraBox.intersectsBox(modelBox)) {
+          // Collision detected, adjust the camera position
+          const collisionNormal = new THREE.Vector3().subVectors(camera.position, modelBox.getCenter(new THREE.Vector3())).normalize();
+
+          // Adjust the push-back to reduce the bounce effect
+          const pushBackAmount = 0.2;  // Amount to push back the camera
+          const bounceDamping = 0.1;  // Factor to reduce the bounce
+
+          // Move the camera away from the collision and apply bounce damping
+          camera.position.add(collisionNormal.multiplyScalar(pushBackAmount));
+          camera.position.add(collisionNormal.multiplyScalar(bounceDamping));  // Reduce bounce effect
+      }
+  }
+}
+
+// Adding models to the bounding box array after loading
+models.forEach(model => {
+  const box = new THREE.Box3().setFromObject(model);
+  modelBoundingBoxes.push(box);
+});
+
+
+
+
+  
+// After adding all walls to the scene
+const wallBoundingBoxes = [];
+
+// Assuming you have an array of wall meshes
+const walls = [frontWall, backWall, leftWall, rightWall, 
+    floor , alternateFloor, LEFT1Floor , topFloor , ceiling1
+    , carpet , RWSP , LWSP , TSP , ENT1 , ENT2 , texturedPasswordDoor
+    , door , ENT22
+
+
+
+
+
+]; // Add all wall meshes here
+
+walls.forEach(wall => {
+    const box = new THREE.Box3().setFromObject(wall);
+    wallBoundingBoxes.push(box);
+});
 
 
 
@@ -2068,7 +2740,7 @@ function isNearDevice() {
 function startPasswordInput() {
   isInteracting = true;
   playDeviceInteractionSound();  // Play sound for interaction
-  interactionUI.innerHTML = "Enter Password:";
+  interactionUI.innerHTML = "Enter Password:<br>Press Q to close the device";
 
   inputDiv = document.createElement('div');
   inputDiv.style.position = 'absolute';
@@ -2143,19 +2815,26 @@ function showPasswordMessage(isCorrect) {
     document.body.removeChild(messageDiv);
   }, 3000);
 }
-
-// Open the password door (trigger animation or door movement)
-// Open the password door (trigger animation or door movement)
 function openPasswordDoor() {
   // Play the door sound only if it's not already playing
   if (doorOpenSound1.paused || doorOpenSound1.ended) {
     doorOpenSound1.play();
   }
 
+  // Remove the bounding box for the door before the animation starts
+  const doorBox = new THREE.Box3().setFromObject(texturedPasswordDoor);
+  const doorIndex = wallBoundingBoxes.findIndex(box => box.equals(doorBox));
+  if (doorIndex !== -1) {
+    wallBoundingBoxes.splice(doorIndex, 1); // Remove the bounding box for the door
+  }
+
   // Animate the door opening (slide the door very slightly upward on the y-axis)
   const openDoorAnimation = new TWEEN.Tween(texturedPasswordDoor.position)
     .to({ y: texturedPasswordDoor.position.y + 11 }, 6000)  // Slide the door by a very small amount on the y-axis
     .easing(TWEEN.Easing.Quadratic.Out)
+    .onComplete(() => {
+      // Any additional actions after the door finishes opening
+    })
     .start();
 
   // Ensure the sound plays for the duration of the door opening animation
@@ -2224,50 +2903,81 @@ function playDeviceInteractionSound() {
 
 
 
+// Add this OUTSIDE animate(), at the top level
+let waterRising = true;
+const waterRiseSpeed = 0.05; // adjust this to make it rise faster or slower
 
+
+walls.forEach((wall, i) => {
+  const box = new THREE.Box3().setFromObject(wall);
+  const helper = new THREE.Box3Helper(box, 0xff0000);
+  scene.add(helper);
+});
 function animate() {
   if (gameOverState) return; // Stop everything if the game is over
   requestAnimationFrame(animate);
+
+  checkCameraCollision();
   TWEEN.update();  // Ensure TWEEN animations are updated in the loop
   updateInteractionUI(); // Check proximity to device and update UI
 
+  
+  
   const delta = clock.getDelta(); // Get time delta for smooth movement
+ // Update the time uniform for the water material
+ waterMaterial.uniforms.time.value += delta; // Increment time based on the delta time
 
-  // Update the time uniform for the water material
-  waterMaterial.uniforms.time.value += delta; // Increment time based on the delta time
-
-  if (waterMixer) {
-    waterMixer.update(delta); // Update the water animation
-}
-  /*
+/*
   if (walkingMixer) walkingMixer.update(delta); // Update the new animation mixer
 
   // Update the model's position to match the camera's position
   if (walkingModel) {
       walkingModel.position.set(camera.position.x, camera.position.y - .5, camera.position.z); // Adjust Y to show feet
   }
-  */
+      */
+
+  // Update the water animation if it exists
+  if (waterMixer) {
+      waterMixer.update(delta); // Update the water animation
+  }
 
   if (candleMixer) {
     candleMixer.update(delta); // Update the candle animation
-  }
+}
   
   if (mixer) {
-    mixer.update(delta); // Update the mixer for other animations
-  }
-
+    mixer.update(delta); // Update the candle animation
+}
   // Update FPS controls
   if (controls.pointerLockControls.isLocked) {
       controls.update(delta);
   }
 
+ // Check player bounds
+ checkPlayerBounds(camera.position); // Check the camera's position (player's position)
+
   updateZombie(); // Update zombie movement
   zombieFollowPlayer(); // Ensure the zombie follows the player
-  
+
+
+// Rising water logic
+if (waterRising) {
+    water.position.y += waterRiseSpeed * delta;
+
+    // also rise the water1 GLB model to match
+    if (water1) {
+        water1.position.y += waterRiseSpeed * delta;
+    }
+
+    // Game over when water reaches y = 10
+    if (water.position.y >= -40.2) {
+        waterRising = false;
+        triggerFloodGameOver();
+    }
+}
+
   const playerPosition = camera.position;
 
-  checkPlayerBounds(playerPosition);
-  
   checkProximityToKey(playerPosition);
   checkProximityToDoor(playerPosition);
 
@@ -2277,29 +2987,6 @@ function animate() {
   }
 
   renderer.render(scene, camera);
-  }
-  
-createChair(scene);
-createdesk(scene);
-createaircon(scene);
-createflower(scene);
-createframe(scene);
-createdispenser(scene);
-created_design1(scene);
-    created_design2(scene);
-    created_design3(scene);
-    created_floor(scene);
-    created_hallchairs(scene);
-    created_fence(scene);
-    created_cheaproom(scene);
-    created_nearstatue(scene);
-    /*
-    created_ceiling(scene);
-    created_statue(scene)
-    
-    created_fallingceiling(scene);
-  
-    created_dead(scene);
-    created_fallingdebris(scene);
-    */
+}
+
 animate();
