@@ -12,6 +12,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZl5JdTHrEdJPUKTwnWV2NrO2PWWqYdWg",
@@ -26,10 +27,207 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
+// Global user state variables
 let currentUser = null;
 let isAdminUser = false;
 const ADMIN_EMAIL = "sanjuanazuara@gmail.com";
+
+// Levels and Difficulty State
+let currentLevel = 1;
+let maxReachedLevel = 1;
+let zombieTransformTimeout = null;
+
+// Mobile Device Detection
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+//================================================================
+// Levels & Difficulty System Logic
+//================================================================
+function applyLevelDifficulty(level) {
+  currentLevel = level;
+  const hudNum = document.getElementById('hud-level-number');
+  const vicNum = document.getElementById('victory-level-num');
+  if (hudNum) hudNum.textContent = level;
+  if (vicNum) vicNum.textContent = level;
+  
+  const t = (level - 1) / 19; // 0 to 1 scaling
+  
+  // Water rise speed: 0.03 to 0.22
+  waterRiseSpeed = 0.03 + t * 0.19;
+  
+  // Zombie speed multiplier: 0.7 to 2.2
+  zombieMoveSpeedMultiplier = 0.7 + t * 1.5;
+  
+  // Fog density: 0.015 to 0.075
+  fogDensity = 0.015 + t * 0.06;
+  if (scene && scene.fog) {
+    scene.fog.density = fogDensity;
+  }
+  
+  // Update next level info text
+  const nextDificultad = document.getElementById('next-level-dificultad');
+  if (nextDificultad) {
+    if (level < 20) {
+      nextDificultad.textContent = `Nivel ${level + 1}: +Niebla, +Velocidad de Inundación, +Velocidad del Monstruo`;
+    } else {
+      nextDificultad.textContent = '¡Has completado todos los niveles de Misterios Innova!';
+    }
+  }
+}
+
+function triggerLevelComplete() {
+  gameOverState = true; // Pause updates
+  if (pointerLockControls && pointerLockControls.unlock) {
+    pointerLockControls.unlock();
+  }
+  
+  // Save progress in Firebase Firestore
+  if (currentUser) {
+    const userDocRef = doc(db, "users", currentUser.uid);
+    if (currentLevel === maxReachedLevel && currentLevel < 20) {
+      maxReachedLevel = currentLevel + 1;
+      setDoc(userDocRef, { highestLevel: maxReachedLevel }, { merge: true })
+        .then(() => console.log("Progress saved in Firebase!"))
+        .catch((err) => console.error("Error saving progress:", err));
+    }
+  }
+  
+  // Show UI
+  const victoryScreen = document.getElementById('victory-screen');
+  if (victoryScreen) {
+    victoryScreen.style.display = 'flex';
+    victoryScreen.style.opacity = 1;
+  }
+  
+  const victoryTitle = document.getElementById('victory-title');
+  const victoryNextBtn = document.getElementById('victory-next-btn');
+  if (victoryTitle && victoryNextBtn) {
+    if (currentLevel >= 20) {
+      victoryTitle.textContent = '¡CAMPAÑA COMPLETADA!';
+      victoryNextBtn.textContent = 'REINICIAR JUEGO';
+    } else {
+      victoryTitle.textContent = '¡NIVEL COMPLETADO!';
+      victoryNextBtn.textContent = 'SIGUIENTE NIVEL';
+    }
+  }
+}
+
+function rebuildCollisionBoxes() {
+  if (typeof wallBoundingBoxes !== 'undefined' && typeof walls !== 'undefined') {
+    wallBoundingBoxes.length = 0;
+    walls.forEach(wall => {
+      if (wall) {
+        const box = new THREE.Box3().setFromObject(wall);
+        wallBoundingBoxes.push(box);
+      }
+    });
+  }
+}
+
+function startZombieTimer() {
+  if (zombieTransformTimeout) clearTimeout(zombieTransformTimeout);
+  zombieTransformTimeout = setTimeout(() => {
+    if (zombie && !gameOverState) {
+      const savedPosition = zombie.position.clone();
+      loadZombieModel(
+        '/images/models/Running Crawl.fbx.glb',
+        [0.090, 0.090, 0.090],
+        savedPosition,
+        3.5,
+        2.0,
+        null,
+        true
+      );
+    }
+  }, 20000);
+}
+
+function resetSceneForNextLevel() {
+  // 1. Reset player position and velocity
+  camera.position.set(39, 5, -21);
+  if (controls) {
+    controls.velocity.set(0, 0, 0);
+    controls.isStanding = true;
+  }
+  
+  // 2. Reset water height
+  water.position.y = -50;
+  if (water1) {
+    water1.position.y = 21.7;
+  }
+  waterRising = true;
+  
+  // 3. Reset access card (keyObject)
+  hasKey = false;
+  hasUsedKey = false;
+  if (keyObject) {
+    if (keyObject.parent === camera) {
+      camera.remove(keyObject);
+    }
+    // Only add if not already in scene
+    let inScene = false;
+    scene.traverse(child => {
+      if (child === keyObject) inScene = true;
+    });
+    if (!inScene) {
+      scene.add(keyObject);
+    }
+    keyObject.position.set(35, 4, 30);
+    keyObject.scale.set(0.4, 0.4, 0.4);
+    keyObject.visible = true;
+  }
+  const keyHUD = document.getElementById('key-image-container');
+  if (keyHUD) keyHUD.style.display = 'none';
+  
+  // 4. Reset doors
+  doorOpen = false;
+  deviceInteracted = false;
+  enteredPassword = "";
+  if (door) {
+    door.position.set(24, 4, 44);
+  }
+  if (texturedPasswordDoor) {
+    texturedPasswordDoor.position.set(23, 7, -42);
+  }
+  
+  // Re-add closed doors to wallBoundingBoxes
+  rebuildCollisionBoxes();
+  
+  // 5. Reset zombie position and reload first model (female walk)
+  if (zombie) {
+    // Stop all action on zombie mix if exists
+    if (mixer) mixer.stopAllAction();
+    // Remove zombie from scene
+    scene.remove(zombie);
+    zombie = null;
+  }
+  zombieState = "patrolling";
+  zombieStuckTimer = 0;
+  
+  loadZombieModel(
+    '/images/models/exaggerated_female_walk.glb',
+    [4, 5, 3],
+    new THREE.Vector3(0, 5, 0),
+    1.5,
+    1.0,
+    () => {
+      console.log('Level zombie reset!');
+      startZombieTimer(); // Reset the 20s transformer timer
+    }
+  );
+  
+  // 6. Reset Game Over state
+  gameOverState = false;
+  
+  // 7. Lock controls
+  if (pointerLockControls && !isMobile) {
+    pointerLockControls.lock();
+  }
+}
+
+
 
 // Global controls and sound variables
 let pointerLockControls = null;
@@ -57,10 +255,14 @@ onAuthStateChanged(auth, (user) => {
     if (isAdminUser) {
       roleLabel.textContent = 'ADMINISTRADOR';
       roleLabel.className = 'user-role admin';
-      // Show admin features
-      document.getElementById('editModeBtn').style.display = 'inline-block';
-      const guiContainer = document.querySelector('.dg.ac');
-      if (guiContainer) guiContainer.style.display = 'block';
+      // Show admin features if not mobile
+      if (!isMobile) {
+        document.getElementById('editModeBtn').style.display = 'inline-block';
+        const guiContainer = document.querySelector('.dg.ac');
+        if (guiContainer) guiContainer.style.display = 'block';
+      } else {
+        document.getElementById('editModeBtn').style.display = 'none';
+      }
     } else {
       roleLabel.textContent = 'Jugador';
       roleLabel.className = 'user-role';
@@ -70,8 +272,31 @@ onAuthStateChanged(auth, (user) => {
       if (guiContainer) guiContainer.style.display = 'none';
     }
     
-    document.getElementById('firstPersonBtn').style.display = 'inline-block';
-    document.getElementById('controls').style.display = 'flex';
+    // Load level progress from Firebase Firestore
+    const userDocRef = doc(db, "users", user.uid);
+    getDoc(userDocRef).then((docSnap) => {
+      if (docSnap.exists()) {
+        maxReachedLevel = docSnap.data().highestLevel || 1;
+      } else {
+        maxReachedLevel = 1;
+        setDoc(userDocRef, { highestLevel: 1 });
+      }
+      applyLevelDifficulty(maxReachedLevel);
+      document.getElementById('level-indicator-hud').style.display = 'block';
+    }).catch(err => {
+      console.error("Error reading progress:", err);
+      applyLevelDifficulty(1);
+      document.getElementById('level-indicator-hud').style.display = 'block';
+    });
+    
+    if (isMobile) {
+      document.getElementById('controls').style.display = 'none';
+      document.getElementById('mobile-controls-layer').style.display = 'block';
+    } else {
+      document.getElementById('firstPersonBtn').style.display = 'inline-block';
+      document.getElementById('controls').style.display = 'flex';
+    }
+    
     document.getElementById('user-profile-hud').style.display = 'flex';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('webgl-container').style.display = 'block';
@@ -81,6 +306,8 @@ onAuthStateChanged(auth, (user) => {
     stopAmbientAudio(); // Custom function to pause all playing loop audios
     
     document.getElementById('user-profile-hud').style.display = 'none';
+    document.getElementById('level-indicator-hud').style.display = 'none';
+    document.getElementById('mobile-controls-layer').style.display = 'none';
     document.getElementById('controls').style.display = 'none';
     document.getElementById('webgl-container').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -844,9 +1071,9 @@ class FPSControls {
 
       scene.add(this.pointerLockControls.getObject()); // Use getObject()
 
-      // Fixed: only lock pointer if the user has signed in
+      // Fixed: only lock pointer if the user has signed in and not on mobile
       document.addEventListener('click', () => {
-        if (currentUser) {
+        if (currentUser && !isMobile) {
           this.pointerLockControls.lock();
         }
       });
@@ -3227,7 +3454,7 @@ function playDeviceInteractionSound() {
 
 // Add this OUTSIDE animate(), at the top level
 let waterRising = true;
-const waterRiseSpeed = 0.05; // adjust this to make it rise faster or slower
+let waterRiseSpeed = 0.05; // adjust this to make it rise faster or slower
 
 
 walls.forEach((wall, i) => {
@@ -3243,20 +3470,9 @@ function animate() {
   TWEEN.update();  // Ensure TWEEN animations are updated in the loop
   updateInteractionUI(); // Check proximity to device and update UI
 
-  
-  
   const delta = clock.getDelta(); // Get time delta for smooth movement
- // Update the time uniform for the water material
- waterMaterial.uniforms.time.value += delta; // Increment time based on the delta time
-
-/*
-  if (walkingMixer) walkingMixer.update(delta); // Update the new animation mixer
-
-  // Update the model's position to match the camera's position
-  if (walkingModel) {
-      walkingModel.position.set(camera.position.x, camera.position.y - .5, camera.position.z); // Adjust Y to show feet
-  }
-      */
+  // Update the time uniform for the water material
+  waterMaterial.uniforms.time.value += delta; // Increment time based on the delta time
 
   // Update the water animation if it exists
   if (waterMixer) {
@@ -3265,38 +3481,43 @@ function animate() {
 
   if (candleMixer) {
     candleMixer.update(delta); // Update the candle animation
-}
+  }
   
   if (mixer) {
     mixer.update(delta); // Update the candle animation
-}
+  }
+  
   // Update FPS controls
-  if (controls.pointerLockControls.isLocked) {
+  if (controls && (controls.pointerLockControls.isLocked || isMobile)) {
       controls.update(delta);
   }
 
- // Check player bounds
- checkPlayerBounds(camera.position); // Check the camera's position (player's position)
+  // Check player bounds
+  checkPlayerBounds(camera.position); // Check the camera's position (player's position)
 
   updateZombie(delta); // Update zombie movement
-  // Ensure the zombie follows the player
 
+  // Check destination for level finish
+  const escapePos = new THREE.Vector3(-61, 4, -40);
+  if (camera.position.distanceTo(escapePos) < 4 && !gameOverState) {
+      triggerLevelComplete();
+  }
 
-// Rising water logic
-if (waterRising) {
-    water.position.y += waterRiseSpeed * delta;
+  // Rising water logic
+  if (waterRising) {
+      water.position.y += waterRiseSpeed * delta;
 
-    // also rise the water1 GLB model to match
-    if (water1) {
-        water1.position.y += waterRiseSpeed * delta;
-    }
+      // also rise the water1 GLB model to match
+      if (water1) {
+          water1.position.y += waterRiseSpeed * delta;
+      }
 
-    // Game over when water reaches y = 10
-    if (water.position.y >= -40.2) {
-        waterRising = false;
-        triggerFloodGameOver();
-    }
-}
+      // Game over when water reaches y = 10
+      if (water.position.y >= -40.2) {
+          waterRising = false;
+          triggerFloodGameOver();
+      }
+  }
 
   const playerPosition = camera.position;
 
@@ -3309,6 +3530,140 @@ if (waterRising) {
   }
 
   renderer.render(scene, camera);
+}
+
+//================================================================
+// Mobile Controls & Event Handling Setup
+//================================================================
+if (isMobile) {
+  const joystickContainer = document.getElementById('joystick-container');
+  const joystickKnob = document.getElementById('joystick-knob');
+  let joystickActive = false;
+  let startX = 0, startY = 0;
+  
+  joystickContainer.addEventListener('touchstart', (e) => {
+    joystickActive = true;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+  });
+  
+  joystickContainer.addEventListener('touchmove', (e) => {
+    if (!joystickActive) return;
+    const touch = e.touches[0];
+    let dx = touch.clientX - startX;
+    let dy = touch.clientY - startY;
+    
+    const maxRadius = 40; // max radius for joystick movement
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > maxRadius) {
+      dx = (dx / distance) * maxRadius;
+      dy = (dy / distance) * maxRadius;
+    }
+    
+    joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    
+    if (controls) {
+      const threshold = 12;
+      controls.move.forward = (dy < -threshold);
+      controls.move.backward = (dy > threshold);
+      controls.move.left = (dx < -threshold);
+      controls.move.right = (dx > threshold);
+    }
+  });
+  
+  joystickContainer.addEventListener('touchend', () => {
+    joystickActive = false;
+    joystickKnob.style.transform = 'translate(0px, 0px)';
+    if (controls) {
+      controls.move.forward = false;
+      controls.move.backward = false;
+      controls.move.left = false;
+      controls.move.right = false;
+    }
+  });
+  
+  // Mobile Action Buttons
+  document.getElementById('mobile-jump-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (controls && controls.isStanding) {
+      controls.velocity.y += 12;
+      controls.isStanding = false;
+    }
+  });
+  
+  document.getElementById('mobile-interact-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    // Dispatch keyboard events C and E
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'c' }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'e' }));
+    setTimeout(() => {
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: 'c' }));
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: 'e' }));
+    }, 100);
+  });
+  
+  document.getElementById('mobile-flashlight-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    // Dispatch keyboard event KeyF
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyF' }));
+  });
+  
+  // Mobile Look Around
+  let touchStartX = 0;
+  let touchStartY = 0;
+  
+  document.addEventListener('touchstart', (e) => {
+    if (e.target.closest('#mobile-controls-layer') || e.target.closest('#user-profile-hud') || e.target.closest('#controls') || e.target.closest('#victory-screen')) {
+      return;
+    }
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', (e) => {
+    if (e.target.closest('#mobile-controls-layer') || e.target.closest('#user-profile-hud') || e.target.closest('#controls') || e.target.closest('#victory-screen')) {
+      return;
+    }
+    if (e.touches.length === 1 && currentUser && !gameOverState && !isInteracting) {
+      const clientX = e.touches[0].clientX;
+      const clientY = e.touches[0].clientY;
+      
+      const deltaX = clientX - touchStartX;
+      const deltaY = clientY - touchStartY;
+      
+      touchStartX = clientX;
+      touchStartY = clientY;
+      
+      // Look around (rotate camera)
+      const sensitivity = 0.003;
+      camera.rotation.y -= deltaX * sensitivity;
+      camera.rotation.x -= deltaY * sensitivity;
+      
+      // Clamp pitch to prevent flipping upside down
+      camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
+    }
+  }, { passive: true });
+}
+
+// Victory Screen "SIGUIENTE NIVEL" button click listener
+const victoryNextBtn = document.getElementById('victory-next-btn');
+if (victoryNextBtn) {
+  victoryNextBtn.addEventListener('click', () => {
+    const victoryScreen = document.getElementById('victory-screen');
+    if (victoryScreen) victoryScreen.style.display = 'none';
+    
+    if (currentLevel >= 20) {
+      applyLevelDifficulty(1);
+    } else {
+      applyLevelDifficulty(currentLevel + 1);
+    }
+    
+    resetSceneForNextLevel();
+  });
 }
 
 animate();

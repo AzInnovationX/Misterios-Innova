@@ -298,9 +298,211 @@
             border-color: #ff4d4d;
             color: #ff4d4d;
         }
+
+        /* Mobile Controls Styling */
+        #mobile-controls-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none; /* Let touches pass through to look around */
+            z-index: 500;
+            display: none; /* Shown programmatically on mobile after login */
+        }
+        
+        #joystick-container {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 120px;
+            height: 120px;
+            background: rgba(15, 22, 36, 0.5);
+            border: 2px solid rgba(145, 172, 173, 0.4);
+            border-radius: 50%;
+            pointer-events: auto; /* Active for touch */
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        #joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: rgba(145, 172, 173, 0.8);
+            border: 1.5px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        #mobile-buttons-container {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+        
+        .mobile-action-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(15, 22, 36, 0.8);
+            border: 2px solid rgba(145, 172, 173, 0.6);
+            color: #b7d2d3;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto; /* Active for touch */
+            touch-action: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .mobile-action-btn:active {
+            background: rgba(145, 172, 173, 0.4);
+            border-color: #ffffff;
+            color: #ffffff;
+            transform: scale(0.95);
+        }
+        
+        /* Level indicator HUD */
+        #level-indicator-hud {
+            position: fixed;
+            top: 85px; /* Under the user profile HUD */
+            right: 15px; 
+            background: rgba(15, 22, 36, 0.7);
+            border: 1.5px solid rgba(145, 172, 173, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e0e6ed;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px rgba(183, 210, 211, 0.5);
+            display: none; /* Shown after login */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #level-indicator-hud span {
+            color: #ff4d4d;
+        }
+
+        /* Next Level Victory Screen styles */
+        #victory-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(3, 5, 8, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 12000;
+            transition: opacity 0.5s ease;
+        }
+        .victory-card {
+            background: rgba(15, 22, 36, 0.95);
+            border: 2px solid rgba(74, 255, 74, 0.5);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(74, 255, 74, 0.3);
+            text-align: center;
+            color: #e0e6ed;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .victory-card h2 {
+            font-size: 26px;
+            letter-spacing: 3px;
+            color: #4aff4a;
+            text-shadow: 0 0 10px rgba(74, 255, 74, 0.4);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .victory-details {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(145, 172, 173, 0.2);
+        }
+        .victory-details p {
+            margin: 5px 0;
+        }
+        .victory-details span {
+            color: #ff4d4d;
+            font-weight: bold;
+        }
+        .victory-btn {
+            background-color: #4aff4a;
+            color: #030508;
+            border: none;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 4px 10px rgba(74,255,74,0.3);
+            letter-spacing: 1px;
+        }
+        .victory-btn:hover {
+            background-color: #3ee63e;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(74,255,74,0.5);
+        }
     </style>
 </head>
 <body>
+    <!-- Victory Level Screen -->
+    <div id="victory-screen">
+        <div class="victory-card">
+            <h2 id="victory-title">¡NIVEL COMPLETADO!</h2>
+            <div class="victory-details">
+                <p>Nivel superado: <span id="victory-level-num">1</span>/20</p>
+                <p>Estado de inundación: <span>Evadido</span></p>
+                <p>Próximo nivel: <span id="next-level-dificultad" style="color: #ff4d4d;">+Niebla, +Velocidad de Agua</span></p>
+            </div>
+            <button id="victory-next-btn" class="victory-btn">SIGUIENTE NIVEL</button>
+        </div>
+    </div>
+
+    <!-- Mobile Virtual HUD -->
+    <div id="mobile-controls-layer">
+        <div id="joystick-container">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="mobile-buttons-container">
+            <button id="mobile-interact-btn" class="mobile-action-btn">USAR</button>
+            <button id="mobile-flashlight-btn" class="mobile-action-btn">LUZ</button>
+            <button id="mobile-jump-btn" class="mobile-action-btn">SALTAR</button>
+        </div>
+    </div>
+
+    <!-- Level Indicator HUD -->
+    <div id="level-indicator-hud">
+        NIVEL: <span id="hud-level-number">1</span>/20
+    </div>
+
     <!-- Firebase Login Screen -->
     <div id="login-screen">
         <div class="login-card">
