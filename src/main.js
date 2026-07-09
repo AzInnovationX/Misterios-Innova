@@ -38,6 +38,7 @@ const ADMIN_EMAIL = "sanjuanazuara@gmail.com";
 let currentLevel = 1;
 let maxReachedLevel = 1;
 let zombieTransformTimeout = null;
+let cameraViewMode = "firstperson"; // "firstperson" or "thirdperson"
 
 // Mobile Device Detection
 const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -253,6 +254,31 @@ function updateMissionHUD() {
     missionHint.textContent = "Pista: Corre hacia la luz roja al final del pasillo (punto de evacuación de rescate).";
   }
 }
+
+//================================================================
+// Camera View Mode (First Person / Third Person Toggle)
+//================================================================
+window.toggleCameraViewMode = function() {
+  if (cameraViewMode === "firstperson") {
+    cameraViewMode = "thirdperson";
+    if (walkingModel) walkingModel.visible = true;
+    if (knifeGroup) knifeGroup.visible = false; // Hide FP weapon
+    showFlashlightMessage("🎥 Cámara: Tercera Persona", 1500);
+  } else {
+    cameraViewMode = "firstperson";
+    if (walkingModel) walkingModel.visible = false;
+    if (knifeGroup) knifeGroup.visible = true; // Show FP weapon
+    showFlashlightMessage("🎥 Cámara: Primera Persona", 1500);
+  }
+}
+
+// Listen for V key on PC
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyV' && currentUser && !gameOverState) {
+    window.toggleCameraViewMode();
+  }
+});
+
 
 
 
@@ -1535,7 +1561,6 @@ const loader = new GLTFLoader();
 
 
 
-/*
 let walkingModel; 
 let walkingMixer;
 
@@ -1544,19 +1569,18 @@ loader.load('/images/models/nathan_animated_003_-_walking_3d_man.glb', (gltf) =>
     walkingMixer = new THREE.AnimationMixer(walkingModel);
     walkingModel.scale.set(0.0080, 0.0080, 0.0080);
 
-    // Traverse the model to find and "cut" specific parts
+    // Start invisible (first-person mode by default)
+    walkingModel.visible = false;
+
+    // Enable shadows for the player model
     walkingModel.traverse((child) => {
         if (child.isMesh) {
-            // Example: Remove or hide specific parts
-            if (child.name === 'Head' || child.name === 'Torso') {
-                child.visible = false; // Hide the part
-                // OR remove it completely:
-                // walkingModel.remove(child);
-            }
+            child.castShadow = true;
+            child.receiveShadow = true;
         }
     });
 
-    // Play walking animation
+    // Set up walking animation clip
     gltf.animations.forEach((clip) => {
         const action = walkingMixer.clipAction(clip);
         action.play();
@@ -1564,9 +1588,6 @@ loader.load('/images/models/nathan_animated_003_-_walking_3d_man.glb', (gltf) =>
 
     scene.add(walkingModel);
 });
-
-
-*/
 
 
 
@@ -3843,7 +3864,36 @@ function animate() {
 
   // Proximity checks are handled automatically above
 
+  // Update walking model mixer if in third-person mode
+  if (walkingMixer && cameraViewMode === "thirdperson" && !gameOverState) {
+    const isMoving = (controls && (controls.move.forward || controls.move.backward || controls.move.left || controls.move.right));
+    if (isMoving) {
+      walkingMixer.update(delta);
+    } else {
+      walkingMixer.setTime(0);
+    }
+  }
+
+  const physicalPosition = camera.position.clone();
+  if (walkingModel && cameraViewMode === "thirdperson" && !gameOverState) {
+      walkingModel.position.copy(physicalPosition).sub(new THREE.Vector3(0, 2.2, 0));
+      
+      const camDir = new THREE.Vector3();
+      camera.getWorldDirection(camDir);
+      const angle = Math.atan2(camDir.x, camDir.z);
+      walkingModel.rotation.y = angle + Math.PI;
+      
+      // Temporarily offset camera coordinates for rendering
+      camera.position.addScaledVector(camDir, -3.0);
+      camera.position.y += 1.6; // Height offset
+  }
+
   renderer.render(scene, camera);
+
+  // Restore physical position for physics updates in the next frame
+  if (cameraViewMode === "thirdperson" && !gameOverState) {
+      camera.position.copy(physicalPosition);
+  }
 }
 
 //================================================================
@@ -3907,6 +3957,13 @@ if (isMobile) {
     }
   });
   
+  document.getElementById('mobile-view-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (typeof toggleCameraViewMode === 'function') {
+      toggleCameraViewMode();
+    }
+  });
+
   document.getElementById('mobile-attack-btn').addEventListener('touchstart', (e) => {
     e.preventDefault();
     if (typeof performKnifeSlash === 'function') {
