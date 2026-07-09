@@ -1071,10 +1071,15 @@ class FPSControls {
 
       scene.add(this.pointerLockControls.getObject()); // Use getObject()
 
-      // Fixed: only lock pointer if the user has signed in and not on mobile
+      // Fixed: only lock pointer if the user has signed in and not on mobile.
+      // If already locked on PC, click toggles the flashlight.
       document.addEventListener('click', () => {
         if (currentUser && !isMobile) {
-          this.pointerLockControls.lock();
+          if (this.pointerLockControls.isLocked) {
+            document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyF' }));
+          } else {
+            this.pointerLockControls.lock();
+          }
         }
       });
 
@@ -2435,15 +2440,18 @@ export function hideKeyCollectNote() {
   }
 }
 
-// Function to check proximity to key and show note
 function checkProximityToKey(playerPosition) {
-  if (keyObject) {
+  if (keyObject && !hasKey) {
     const keyPosition = keyObject.position.clone();
     const distance = playerPosition.distanceTo(keyPosition);
 
-    if (distance < 5 && !hasKey) {  // Only show note if the player doesn't already have the key
+    if (distance < 4) {
+      onKeyCollected();
+      hideKeyCollectNote();
+    } else if (distance < 7) {
       showKeyCollectNote();
-      document.addEventListener('keydown', onKeyPress);
+      const note = document.getElementById('key-collect-note');
+      if (note) note.textContent = "Acércate para recoger la tarjeta";
     } else {
       hideKeyCollectNote();
     }
@@ -2540,32 +2548,21 @@ function checkProximityToDoor(playerPosition) {
   const doorPosition = door.position.clone();
   const distanceToDoor = playerPosition.distanceTo(doorPosition);
 
-  if (distanceToDoor < 10) { // You can adjust the distance to your needs
+  if (distanceToDoor < 10) { 
     if (hasKey && !doorOpen && !hasUsedKey && boundDoor === door) {  // Ensure the key is bound to this door
-      // Display a prompt to open the door if the player has the key
-      showDoorOpenNote();  // Function to show a prompt on the screen (optional)
-      document.addEventListener('keydown', onDoorPress);
-    } else {
-      // Display a different message if the player doesn't have the key
-      showNoKeyNote();  // Function to show a "no key" message
-      document.removeEventListener('keydown', onDoorPress);
+      if (distanceToDoor < 4) {
+        openDoor();
+        hideDoorNote();
+      } else {
+        showDoorOpenNote();
+        const note = document.getElementById('door-open-note');
+        if (note) note.textContent = "Acércate para abrir la puerta";
+      }
+    } else if (!doorOpen) {
+      showNoKeyNote();
     }
   } else {
     hideDoorNote();  // Hide the door prompt when not close
-    document.removeEventListener('keydown', onDoorPress);
-  }
-}
-
-
-// Handle "E" key press to open the door
-function onDoorPress(event) {
-  if (event.key === 'e') {
-    if (hasKey && !hasUsedKey && boundDoor === door) {  // Only open this specific door with the key
-      openDoor();  // Function to open the door
-      doorOpenSound.play();  // Play the sound when the door opens
-    } else {
-      alert('¡Necesitas la tarjeta de acceso correcta para abrir la puerta!');  // Alert if the player doesn't have the key or tries to open the wrong door
-    }
   }
 }
 
@@ -3289,32 +3286,120 @@ function isNearDevice() {
 function startPasswordInput() {
   isInteracting = true;
   playDeviceInteractionSound();  // Play sound for interaction
-  interactionUI.innerHTML = "Introduce la contraseña:<br>Presiona Q para salir";
+  interactionUI.innerHTML = "Introduce la contraseña:";
 
   inputDiv = document.createElement('div');
-  inputDiv.style.position = 'absolute';
+  inputDiv.style.position = 'fixed';
   inputDiv.style.top = '50%';
   inputDiv.style.left = '50%';
   inputDiv.style.transform = 'translate(-50%, -50%)';
-  inputDiv.style.backgroundColor = 'rgba(0,0,0,0.8)';
-  inputDiv.style.padding = '20px';
-  inputDiv.style.borderRadius = '10px';
-  inputDiv.style.color = 'white';
-  inputDiv.style.fontFamily = 'fantasy';  // Set font to fantasy
-  inputDiv.innerHTML = ` 
-    <p style="font-size: 30px;">Contraseña: ${enteredPassword}</p>
-    <p>Presiona Enter para enviar</p>
+  inputDiv.style.backgroundColor = 'rgba(15, 22, 36, 0.95)';
+  inputDiv.style.border = '2px solid rgba(145, 172, 173, 0.6)';
+  inputDiv.style.padding = '25px';
+  inputDiv.style.borderRadius = '12px';
+  inputDiv.style.color = '#e0e6ed';
+  inputDiv.style.fontFamily = 'Courier New, Courier, monospace';
+  inputDiv.style.textAlign = 'center';
+  inputDiv.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+  inputDiv.style.zIndex = '1500';
+  inputDiv.style.backdropFilter = 'blur(10px)';
+
+  // Build Virtual Keypad HTML
+  inputDiv.innerHTML = `
+    <div style="font-size: 20px; font-weight: bold; margin-bottom: 15px; border-bottom: 1.5px dashed rgba(145,172,173,0.3); padding-bottom: 10px; letter-spacing: 2px;">
+      TERMINAL DE ACCESO
+    </div>
+    <div id="pwd-display" style="font-size: 28px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px; letter-spacing: 5px; margin-bottom: 15px; border: 1px solid rgba(145,172,173,0.2); min-height: 34px; color: #4aff4a; font-weight: bold; display: flex; justify-content: center; align-items: center;">
+      ${enteredPassword || '&nbsp;'}
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 240px; margin: 0 auto 15px;">
+      <button class="keypad-btn" data-val="1">1</button>
+      <button class="keypad-btn" data-val="2">2</button>
+      <button class="keypad-btn" data-val="3">3</button>
+      <button class="keypad-btn" data-val="4">4</button>
+      <button class="keypad-btn" data-val="5">5</button>
+      <button class="keypad-btn" data-val="6">6</button>
+      <button class="keypad-btn" data-val="7">7</button>
+      <button class="keypad-btn" data-val="8">8</button>
+      <button class="keypad-btn" data-val="9">9</button>
+      <button class="keypad-btn" data-val="clear" style="color: #ff4d4d;">C</button>
+      <button class="keypad-btn" data-val="0">0</button>
+      <button class="keypad-btn" data-val="back">⌫</button>
+    </div>
+    <button id="keypad-enter" style="width: 100%; max-width: 240px; background-color: #4aff4a; color: #030508; border: none; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-bottom: 10px; font-family: inherit; letter-spacing: 1px;">ENVIAR</button>
+    <button id="keypad-close" style="width: 100%; max-width: 240px; background-color: transparent; color: #ff4d4d; border: 1.5px solid rgba(255, 77, 77, 0.4); padding: 10px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; font-family: inherit; letter-spacing: 1px;">SALIR</button>
+    
+    <style>
+      .keypad-btn {
+        background: rgba(255,255,255,0.05);
+        border: 1.5px solid rgba(145, 172, 173, 0.4);
+        color: #e0e6ed;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 12px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        transition: all 0.15s ease;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .keypad-btn:active {
+        background: rgba(145, 172, 173, 0.3);
+        transform: scale(0.95);
+        border-color: #ffffff;
+      }
+    </style>
   `;
+
   document.body.appendChild(inputDiv);
+
+  // Add click listeners to virtual buttons
+  inputDiv.querySelectorAll('.keypad-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = btn.getAttribute('data-val');
+      if (val === 'clear') {
+        enteredPassword = "";
+        playTypingSound();
+      } else if (val === 'back') {
+        enteredPassword = enteredPassword.slice(0, -1);
+        playTypingSound();
+      } else {
+        if (enteredPassword.length < 8) {
+          enteredPassword += val;
+          playTypingSound();
+        }
+      }
+      updatePasswordDisplay();
+      resetTypingSoundTimeout();
+    });
+  });
+
+  const enterBtn = document.getElementById('keypad-enter');
+  if (enterBtn) {
+    enterBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      validatePassword(enteredPassword);
+    });
+  }
+
+  const closeBtn = document.getElementById('keypad-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      quitInteraction();
+      playDeviceInteractionSound();
+    });
+  }
 }
 
 // Update the password display (show the entered password)
 function updatePasswordDisplay() {
-  if (inputDiv) {
-    inputDiv.innerHTML = ` 
-      <p style="font-size: 30px; color: ${isCorrectPassword() ? 'green' : 'red'};">Contraseña: ${enteredPassword}</p>
-      <p>Presiona Enter para enviar</p>
-    `;
+  const display = document.getElementById('pwd-display');
+  if (display) {
+    display.innerHTML = enteredPassword || '&nbsp;';
+    display.style.color = isCorrectPassword() ? '#4aff4a' : '#ff4d4d';
   }
 }
 
@@ -3414,10 +3499,21 @@ function quitInteraction() {
 
 // Update the interaction UI based on proximity to the device
 function updateInteractionUI() {
-  if (passwordDevice && isNearDevice() && !isInteracting && !deviceInteracted) {
-    interactionUI.innerHTML = "Presiona E para usar la terminal de acceso";  // Show message when near
-  } else if (!isNearDevice() || deviceInteracted) {
-    interactionUI.innerHTML = "";  // Hide message when not near or already interacted
+  if (passwordDevice && !deviceInteracted && !isInteracting) {
+    const playerPos = camera.position;
+    const distanceToDev = playerPos.distanceTo(passwordDevice.position);
+    if (distanceToDev < 8) {
+      if (distanceToDev < 4.0) {
+        startPasswordInput();
+        interactionUI.innerHTML = "";
+      } else {
+        interactionUI.innerHTML = "Acércate a la terminal para usarla";
+      }
+    } else {
+      interactionUI.innerHTML = "";
+    }
+  } else if (deviceInteracted || isInteracting) {
+    interactionUI.innerHTML = "";
   }
 }
 
@@ -3524,10 +3620,7 @@ function animate() {
   checkProximityToKey(playerPosition);
   checkProximityToDoor(playerPosition);
 
-  // Player's distance to the password device
-  if (isNearDevice() && !isInteracting) {
-    interactionUI.innerHTML = "Presiona E para usar la terminal de acceso"; // Prompt to interact
-  }
+  // Proximity checks are handled automatically above
 
   renderer.render(scene, camera);
 }
