@@ -39,6 +39,9 @@ let currentLevel = 1;
 let maxReachedLevel = 1;
 let zombieTransformTimeout = null;
 let cameraViewMode = "firstperson"; // "firstperson" or "thirdperson"
+let adminGodMode = false;
+let adminFreezeWater = false;
+let adminFreezeZombie = false;
 
 // Mobile Device Detection
 const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -309,6 +312,7 @@ onAuthStateChanged(auth, (user) => {
     if (isAdminUser) {
       roleLabel.textContent = 'ADMINISTRADOR';
       roleLabel.className = 'user-role admin';
+      document.getElementById('admin-panel-toggle-btn').style.display = 'inline-block';
       // Show admin features if not mobile
       if (!isMobile) {
         document.getElementById('editModeBtn').style.display = 'inline-block';
@@ -320,6 +324,8 @@ onAuthStateChanged(auth, (user) => {
     } else {
       roleLabel.textContent = 'Jugador';
       roleLabel.className = 'user-role';
+      document.getElementById('admin-panel-toggle-btn').style.display = 'none';
+      document.getElementById('admin-panel-overlay').style.display = 'none';
       // Hide admin features
       document.getElementById('editModeBtn').style.display = 'none';
       const guiContainer = document.querySelector('.dg.ac');
@@ -363,6 +369,8 @@ onAuthStateChanged(auth, (user) => {
     isAdminUser = false;
     stopAmbientAudio(); // Custom function to pause all playing loop audios
     
+    document.getElementById('admin-panel-toggle-btn').style.display = 'none';
+    document.getElementById('admin-panel-overlay').style.display = 'none';
     document.getElementById('user-profile-hud').style.display = 'none';
     document.getElementById('level-indicator-hud').style.display = 'none';
     document.getElementById('mobile-controls-layer').style.display = 'none';
@@ -1901,6 +1909,10 @@ attackSound.volume = 1; // Max volume
 attackSound.playbackRate = 2; // Slightly increase playback speed for intensity
 
 function onZombieAttack() {
+  if (typeof adminGodMode !== 'undefined' && adminGodMode) {
+    showFlashlightMessage("🛡️ Daño de zombie evadido (Modo Dios)", 1500);
+    return;
+  }
   triggerRedFlicker();
   console.log('Player attacked by zombie!');
 
@@ -2013,7 +2025,7 @@ function isPlayerLookingAtZombie({ fovCos = Math.cos(THREE.MathUtils.degToRad(35
 }
 
 function updateZombie(delta) {
-  if (zombie && !zombieStunned) {
+  if (zombie && !zombieStunned && !(typeof adminFreezeZombie !== 'undefined' && adminFreezeZombie)) {
     if (isPlayerLookingAtZombie()) {
       if (mixer) mixer.timeScale = 0;
       console.log(`[ZOMBIE] FROZEN — player is looking | dist: ${camera.position.distanceTo(zombie.position).toFixed(2)}`);
@@ -3840,8 +3852,8 @@ function animate() {
       triggerLevelComplete();
   }
 
-  // Rising water logic
-  if (waterRising) {
+  // Rising water logic (skipped if water is frozen by admin)
+  if (waterRising && !(typeof adminFreezeWater !== 'undefined' && adminFreezeWater)) {
       water.position.y += waterRiseSpeed * delta;
 
       // also rise the water1 GLB model to match
@@ -3851,8 +3863,13 @@ function animate() {
 
       // Game over when water reaches y = 10
       if (water.position.y >= -40.2) {
-          waterRising = false;
-          triggerFloodGameOver();
+          if (typeof adminGodMode !== 'undefined' && adminGodMode) {
+              waterRising = false;
+              showFlashlightMessage("🛡️ Inundación máxima evadida (Modo Dios)", 2000);
+          } else {
+              waterRising = false;
+              triggerFloodGameOver();
+          }
       }
   }
 
@@ -4043,5 +4060,99 @@ if (victoryNextBtn) {
     resetSceneForNextLevel();
   });
 }
+
+//================================================================
+// Admin Panel Control & Initialization
+//================================================================
+function initAdminPanel() {
+  const toggleBtn = document.getElementById('admin-panel-toggle-btn');
+  const closeBtn = document.getElementById('admin-close-btn');
+  const overlay = document.getElementById('admin-panel-overlay');
+  
+  if (!toggleBtn || !closeBtn || !overlay) return;
+
+  // Toggle overlay visibility
+  toggleBtn.addEventListener('click', () => {
+    overlay.style.display = (overlay.style.display === 'none') ? 'block' : 'none';
+  });
+
+  closeBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  // Populate levels select
+  const select = document.getElementById('admin-level-select');
+  if (select && select.children.length === 0) {
+    for (let i = 1; i <= 20; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `Nivel ${i}`;
+      select.appendChild(opt);
+    }
+  }
+
+  // Warp Level
+  document.getElementById('admin-warp-btn').addEventListener('click', () => {
+    const targetLvl = parseInt(select.value);
+    applyLevelDifficulty(targetLvl);
+    resetSceneForNextLevel();
+    showFlashlightMessage(`🌀 Teletransportado al Nivel ${targetLvl}`, 2000);
+  });
+
+  // Cheats
+  document.getElementById('cheat-god-mode').addEventListener('change', (e) => {
+    adminGodMode = e.target.checked;
+    showFlashlightMessage(adminGodMode ? "😇 Modo Dios ACTIVADO" : "Modo Dios DESACTIVADO", 1500);
+  });
+
+  document.getElementById('cheat-freeze-water').addEventListener('change', (e) => {
+    adminFreezeWater = e.target.checked;
+    showFlashlightMessage(adminFreezeWater ? "❄️ Inundación Congelada" : "Inundación Reanudada", 1500);
+  });
+
+  document.getElementById('cheat-freeze-zombie').addEventListener('change', (e) => {
+    adminFreezeZombie = e.target.checked;
+    showFlashlightMessage(adminFreezeZombie ? "🧟 Zombie Congelado" : "Zombie Liberado", 1500);
+  });
+
+  // Helpers
+  document.getElementById('cheat-give-key').addEventListener('click', () => {
+    if (!hasKey) {
+      onKeyCollected();
+      showFlashlightMessage("🗝️ Tarjeta de acceso obtenida", 1500);
+    } else {
+      showFlashlightMessage("Ya tienes la tarjeta", 1500);
+    }
+  });
+
+  document.getElementById('cheat-unlock-all').addEventListener('click', () => {
+    if (!doorOpen) {
+      openDoor();
+    }
+    if (!deviceInteracted) {
+      openPasswordDoor();
+      deviceInteracted = true;
+    }
+    showFlashlightMessage("🔓 Todas las puertas abiertas", 1500);
+  });
+
+  // Reset Firestore Progress
+  document.getElementById('admin-reset-progress').addEventListener('click', () => {
+    if (confirm("¿Estás seguro de que quieres resetear tu progreso en Firebase al Nivel 1?")) {
+      const userDocRef = doc(db, "users", currentUser.uid);
+      setDoc(userDocRef, { highestLevel: 1 }, { merge: true })
+        .then(() => {
+          maxReachedLevel = 1;
+          applyLevelDifficulty(1);
+          resetSceneForNextLevel();
+          showFlashlightMessage("🔥 Progreso reseteado al Nivel 1", 2000);
+        })
+        .catch(err => console.error("Error al resetear progreso:", err));
+    }
+  });
+}
+
+// Initialize Admin Panel
+initAdminPanel();
 
 animate();
