@@ -2,6 +2,131 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { GUI } from 'dat.gui'; // Import dat.GUI
+
+// Firebase SDK & Auth Configuration
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCZl5JdTHrEdJPUKTwnWV2NrO2PWWqYdWg",
+  authDomain: "misterios-innova.firebaseapp.com",
+  projectId: "misterios-innova",
+  storageBucket: "misterios-innova.firebasestorage.app",
+  messagingSenderId: "33121826124",
+  appId: "1:33121826124:web:c110f50b9bcebceec3cbe9",
+  measurementId: "G-MH7V9XP03Z"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+let currentUser = null;
+let isAdminUser = false;
+const ADMIN_EMAIL = "sanjuanazuara@gmail.com";
+
+// Global controls and sound variables
+let pointerLockControls = null;
+const zombieSound1 = new Audio('/sounds/Snake Hiss _ Sound Effect(MP3_160K).mp3');
+zombieSound1.loop = true;
+const zombieSound2 = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
+zombieSound2.loop = true;
+
+// Global collision variables (moved to avoid Temporal Dead Zone / hoisting issues)
+const wallBoundingBoxes = [];
+const zombieWallBoxes = [];
+const modelBoundingBoxes = [];
+
+// Firebase Auth state observer and event listeners
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    isAdminUser = (user.email === ADMIN_EMAIL);
+    
+    // Set Profile HUD UI
+    document.getElementById('user-avatar').src = user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+    document.getElementById('user-display-name').textContent = user.displayName || user.email;
+    const roleLabel = document.getElementById('user-role-label');
+    
+    if (isAdminUser) {
+      roleLabel.textContent = 'ADMINISTRADOR';
+      roleLabel.className = 'user-role admin';
+      // Show admin features
+      document.getElementById('editModeBtn').style.display = 'inline-block';
+      const guiContainer = document.querySelector('.dg.ac');
+      if (guiContainer) guiContainer.style.display = 'block';
+    } else {
+      roleLabel.textContent = 'Jugador';
+      roleLabel.className = 'user-role';
+      // Hide admin features
+      document.getElementById('editModeBtn').style.display = 'none';
+      const guiContainer = document.querySelector('.dg.ac');
+      if (guiContainer) guiContainer.style.display = 'none';
+    }
+    
+    document.getElementById('firstPersonBtn').style.display = 'inline-block';
+    document.getElementById('controls').style.display = 'flex';
+    document.getElementById('user-profile-hud').style.display = 'flex';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('webgl-container').style.display = 'block';
+  } else {
+    currentUser = null;
+    isAdminUser = false;
+    stopAmbientAudio(); // Custom function to pause all playing loop audios
+    
+    document.getElementById('user-profile-hud').style.display = 'none';
+    document.getElementById('controls').style.display = 'none';
+    document.getElementById('webgl-container').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    
+    // Hide dat.GUI for unauthenticated
+    const guiContainer = document.querySelector('.dg.ac');
+    if (guiContainer) guiContainer.style.display = 'none';
+    
+    // Unlock pointer controls if active
+    if (pointerLockControls && pointerLockControls.isLocked) {
+      pointerLockControls.unlock();
+    }
+  }
+});
+
+// Setup click handlers for login and logout
+document.getElementById('google-login-btn').addEventListener('click', () => {
+  const errorMsg = document.getElementById('login-error-msg');
+  const statusMsg = document.getElementById('login-status-msg');
+  errorMsg.style.display = 'none';
+  statusMsg.style.display = 'block';
+  statusMsg.textContent = 'Conectando con Google...';
+  
+  signInWithPopup(auth, googleProvider)
+    .then((result) => {
+      statusMsg.textContent = '¡Sesión iniciada con éxito!';
+      setTimeout(() => {
+        statusMsg.style.display = 'none';
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("Firebase Login error:", error);
+      statusMsg.style.display = 'none';
+      errorMsg.style.display = 'block';
+      errorMsg.textContent = 'Error al iniciar sesión: ' + error.message;
+    });
+});
+
+document.getElementById('logout-hud-btn').addEventListener('click', () => {
+  signOut(auth).catch((error) => {
+    console.error("Firebase Signout error:", error);
+  });
+});
+
+
+
 // Import custom object creation functions
 
 
@@ -113,8 +238,12 @@ scene.add(localizedDirectionalLight.target);
 // Sound Setup with Auto-Play Attempt
 //================================================================
 let audioContext;
+let isAmbientAudioPlaying = false;
+let ambientAudios = [];
 
 document.addEventListener('click', function() {
+  if (!currentUser) return; // Only trigger audio if user is logged in
+  
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
@@ -123,12 +252,18 @@ document.addEventListener('click', function() {
     audioContext.resume();
   }
 
-  // Now you can safely start playing audio
-  playAudio();
+  // Now you can safely start playing audio if not already playing
+  if (!isAmbientAudioPlaying) {
+    playAudio();
+    isAmbientAudioPlaying = true;
+  }
 });
 
 // Function to play three audio files at once, looping indefinitely
 function playAudio() {
+  // If we already have audio running, stop it first to be safe
+  stopAmbientAudio();
+
   const audio1 = new Audio('/sounds/Sound Effects Heavy Rain and Thunder.mp3');
   const audio2 = new Audio('/sounds/Underwater Pool - Sound Effect (HD).mp3');
   const audio3 = new Audio('/sounds/Free Horror Ambience (Dark Project).mp3');
@@ -146,13 +281,23 @@ function playAudio() {
   audio1.play().catch(error => console.error('Error playing audio1:', error));
   audio2.play().catch(error => console.error('Error playing audio2:', error));
   audio3.play().catch(error => console.error('Error playing audio3:', error));
+
+  ambientAudios = [audio1, audio2, audio3];
 }
 
-// Example button to trigger audio playback
-const playButton = document.createElement('button');
-playButton.textContent = 'Play Audio';
-playButton.onclick = playAudio;
-document.body.appendChild(playButton);
+function stopAmbientAudio() {
+  ambientAudios.forEach(audio => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (e) {
+      console.error('Error stopping ambient audio:', e);
+    }
+  });
+  ambientAudios = [];
+  isAmbientAudioPlaying = false;
+}
+
 
 
 
@@ -664,7 +809,7 @@ const fogColorControl = fogFolder.addColor({ fogColor: fogColor.getHex() }, 'fog
 function hideGUI() {
   const guiContainer = document.querySelector('.dg.ac'); // Default class for dat.GUI
   if (guiContainer) {
-    guiContainer.style.display = '1';
+    guiContainer.style.display = 'none'; // Fixed bug: changed '1' to 'none'
   }
 }
 
@@ -695,15 +840,23 @@ class FPSControls {
       this.camera = camera;
       this.scene = scene;
       this.pointerLockControls = new PointerLockControls(camera, document.body);
+      pointerLockControls = this.pointerLockControls; // Set global reference
 
       scene.add(this.pointerLockControls.getObject()); // Use getObject()
 
-      document.addEventListener('click', () => this.pointerLockControls.lock());
+      // Fixed: only lock pointer if the user has signed in
+      document.addEventListener('click', () => {
+        if (currentUser) {
+          this.pointerLockControls.lock();
+        }
+      });
 
       this.velocity = new THREE.Vector3(0, 0, 0);
       this.acceleration = new THREE.Vector3(40, 2130, 40);
       this.deceleration = new THREE.Vector3(-10, -55, -10);
       this.move = { forward: false, backward: false, left: false, right: false };
+      this.walkSoundStopTimeout = null; // Timeout reference to fix the frame-by-frame setTimeout bug
+
       this.isStanding = true;
       this.isEditMode = false; // Track whether we are in edit mode
 
@@ -888,6 +1041,10 @@ class FPSControls {
 
     // Play both walking sounds when moving
     if (this.move.forward || this.move.backward || this.move.left || this.move.right) {
+      if (this.walkSoundStopTimeout) {
+        clearTimeout(this.walkSoundStopTimeout);
+        this.walkSoundStopTimeout = null;
+      }
       if (!this.walkSound.isPlaying) {
         this.walkSound.play(); // Play the first sound
       }
@@ -899,10 +1056,13 @@ class FPSControls {
       if (this.walkSound.isPlaying) {
         this.walkSound.stop(); // Stop the first sound
       }
-      // Delay stopping the second sound by 1 second
-      if (this.secondWalkSound.isPlaying) {
-        setTimeout(() => {
-          this.secondWalkSound.stop(); // Stop the second sound after 1 second delay
+      // Delay stopping the second sound by 1 second (safe from frame-by-frame memory leaks)
+      if (this.secondWalkSound.isPlaying && !this.walkSoundStopTimeout) {
+        this.walkSoundStopTimeout = setTimeout(() => {
+          if (this.secondWalkSound.isPlaying) {
+            this.secondWalkSound.stop(); // Stop the second sound after 1 second delay
+          }
+          this.walkSoundStopTimeout = null;
         }, 1000); // 1000 milliseconds = 1 second
       }
     }
@@ -1507,7 +1667,7 @@ setTimeout(() => {
   gameOverMessage.style.fontFamily = 'Courier New, Courier, monospace';
   gameOverMessage.style.color = 'red';
   gameOverMessage.style.fontWeight = 'bold';
-  gameOverMessage.innerText = 'GAME OVER\nPress Ctrl + R to restart';
+  gameOverMessage.innerText = 'FIN DEL JUEGO\nPresiona Ctrl + R para reiniciar';
   document.body.appendChild(gameOverMessage);
 
   // Create the image element
@@ -1561,7 +1721,7 @@ function triggerFloodGameOver() {
     gameOverMessage.style.fontWeight = 'bold';
     gameOverMessage.style.textAlign = 'center';
     gameOverMessage.style.zIndex = '1000';
-    gameOverMessage.innerHTML = 'YOU DROWNED<br><span style="font-size:24px">Press Ctrl + R to restart</span>';
+    gameOverMessage.innerHTML = 'TE HAS AHOGADO<br><span style="font-size:24px">Presiona Ctrl + R para reiniciar</span>';
     document.body.appendChild(gameOverMessage);
 
     // Stop the game loop
@@ -1849,6 +2009,7 @@ loadZombieModel(
 // Input and Controls
 //================================================================
 document.addEventListener('click', () => {
+  if (!currentUser) return; // Fixed: only allow pointer lock if logged in
   if (!isFirstPerson) {
     pointerLockControls.lock(); // Enable first-person mode
     isFirstPerson = true;
@@ -1856,95 +2017,13 @@ document.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (event) => {
+  if (!currentUser) return;
   if (event.key === 'Escape' && isFirstPerson) {
     pointerLockControls.unlock(); // Exit first-person mode
     isFirstPerson = false;
   }
 });
-// First zombie sound
-const zombieSound1 = new Audio('/sounds/Snake Hiss _ Sound Effect(MP3_160K).mp3');
-zombieSound1.loop = true; // Loop for continuous sound
 
-// Second zombie sound (can be the same sound or a different one)
-const zombieSound2 = new Audio('/sounds/Snake (Hiss) - Sound Effect _ ProSounds(MP3_160K).mp3');
-zombieSound2.loop = true; // Loop for continuous sound
-
-function zombieFollowPlayer() {
-    const playerPosition = camera.position;
-    const zombiePosition = zombie.position;
-
-    const direction = new THREE.Vector3();
-    direction.subVectors(playerPosition, zombiePosition).normalize();
-
-    zombie.lookAt(playerPosition);
-
-    const distanceToPlayer = playerPosition.distanceTo(zombiePosition);
-
-    let speed = 0.150; // Base zombie speed
-
-    // Adjust volume based on distance (closer = louder)
-    let volume = 0;
-
-    if (distanceToPlayer <= 8) {
-      // At 8 units or less, volume is at maximum (1)
-      volume = 1;
-    } else if (distanceToPlayer > 8 && distanceToPlayer <= 20) {
-      // Between 8 and 20 units, volume stays high (near max)
-      volume = 1;
-    } else if (distanceToPlayer > 20 && distanceToPlayer <= 26) {
-      // Between 20 and 26 units, gradually fade out the sound
-      volume = Math.max(0, 1 - (distanceToPlayer - 20) / 6);
-    } else {
-      // Beyond 26 units, pause both sounds and reset
-      zombieSound1.pause();
-      zombieSound2.pause();
-      zombieSound1.currentTime = 0;
-      zombieSound2.currentTime = 0;
-      zombieSound1.volume = 0;
-      zombieSound2.volume = 0;
-    }
-
-    // Play the sounds if the player is within range
-    if (distanceToPlayer <= 26) {
-      if (zombieSound1.paused) {
-        zombieSound1.play(); // Start the first sound if not playing
-      }
-      if (zombieSound2.paused) {
-        zombieSound2.play(); // Start the second sound if not playing
-      }
-
-      // Apply adjusted volume to both sounds
-      zombieSound1.volume = volume;
-      zombieSound2.volume = volume;
-    }
-
-    // Adjust playback rate based on distance (closer = higher pitch)
-    const maxPlaybackRate = 1.5; // Maximum pitch (close)
-    const minPlaybackRate = 0.5; // Minimum pitch (far)
-    let playbackRate = THREE.MathUtils.mapLinear(
-      distanceToPlayer,
-      35, // max distance (far)
-      1,  // min distance (close)
-      minPlaybackRate,
-      maxPlaybackRate
-    );
-    playbackRate = THREE.MathUtils.clamp(playbackRate, minPlaybackRate, maxPlaybackRate);
-
-    zombieSound1.playbackRate = playbackRate;
-    zombieSound2.playbackRate = playbackRate;
-
-    if (distanceToPlayer < 1) {
-      speed = 0.2; // Increase zombie speed when very close
-
-      // Attack player if extremely close
-      if (distanceToPlayer < 5) {
-        onZombieAttack(); // Trigger attack
-      }
-    }
-
-    // Move zombie towards the player
-    zombie.position.addScaledVector(direction, speed);
-  }
 
 
 
@@ -2258,7 +2337,7 @@ function onDoorPress(event) {
       openDoor();  // Function to open the door
       doorOpenSound.play();  // Play the sound when the door opens
     } else {
-      alert('You need the correct key to open the door!');  // Alert if the player doesn't have the key or tries to open the wrong door
+      alert('¡Necesitas la tarjeta de acceso correcta para abrir la puerta!');  // Alert if the player doesn't have the key or tries to open the wrong door
     }
   }
 }
@@ -2438,7 +2517,7 @@ let chair
   fence, statue, nearstatue, dead, fallingdebris;
 
 // Array to hold model bounding boxes
-const modelBoundingBoxes = [];
+// modelBoundingBoxes is already declared globally at the top
 const models = [];  // List to hold models once they are loaded
 
 // Define the shrink factor for reducing collision bounding box size
@@ -2867,8 +2946,7 @@ models.forEach(model => {
 
 
 
-const wallBoundingBoxes = [];
-
+// wallBoundingBoxes is already declared globally
 const walls = [frontWall, backWall, leftWall, rightWall, 
     floor , alternateFloor, LEFT1Floor , topFloor , ceiling1
     , carpet , RWSP , LWSP , TSP , ENT1 , ENT2 , texturedPasswordDoor
@@ -2881,7 +2959,7 @@ walls.forEach(wall => {
 });
 
 // ✅ Zombie only collides with actual vertical walls, NOT floor/ceiling
-const zombieWallBoxes = [];
+// zombieWallBoxes is already declared globally
 const zombieWalls = [frontWall, backWall, leftWall, rightWall,
     alternateFloor, LEFT1Floor, RWSP, LWSP, ENT1, ENT2, ENT22,
     texturedPasswordDoor, door
@@ -2962,7 +3040,7 @@ function onMouseMove(event) {
   const intersects = raycaster.intersectObjects([passwordDevice]);
 
   if (intersects.length > 0 && !isInteracting && isNearDevice() && !deviceInteracted) {
-    interactionUI.innerHTML = "Press E to Interact with the Device Manager";  // Show instructions if near device
+    interactionUI.innerHTML = "Presiona E para usar la terminal de acceso";  // Show instructions if near device
   } else if (intersects.length === 0 && !isInteracting) {
     interactionUI.innerHTML = "";  // Clear instructions when not near the device
   }
@@ -2984,7 +3062,7 @@ function isNearDevice() {
 function startPasswordInput() {
   isInteracting = true;
   playDeviceInteractionSound();  // Play sound for interaction
-  interactionUI.innerHTML = "Enter Password:<br>Press Q to close the device";
+  interactionUI.innerHTML = "Introduce la contraseña:<br>Presiona Q para salir";
 
   inputDiv = document.createElement('div');
   inputDiv.style.position = 'absolute';
@@ -2997,8 +3075,8 @@ function startPasswordInput() {
   inputDiv.style.color = 'white';
   inputDiv.style.fontFamily = 'fantasy';  // Set font to fantasy
   inputDiv.innerHTML = ` 
-    <p style="font-size: 30px;">Entered Password: ${enteredPassword}</p>
-    <p>Press Enter to Submit</p>
+    <p style="font-size: 30px;">Contraseña: ${enteredPassword}</p>
+    <p>Presiona Enter para enviar</p>
   `;
   document.body.appendChild(inputDiv);
 }
@@ -3007,8 +3085,8 @@ function startPasswordInput() {
 function updatePasswordDisplay() {
   if (inputDiv) {
     inputDiv.innerHTML = ` 
-      <p style="font-size: 30px; color: ${isCorrectPassword() ? 'green' : 'red'};">Entered Password: ${enteredPassword}</p>
-      <p>Press Enter to Submit</p>
+      <p style="font-size: 30px; color: ${isCorrectPassword() ? 'green' : 'red'};">Contraseña: ${enteredPassword}</p>
+      <p>Presiona Enter para enviar</p>
     `;
   }
 }
@@ -3047,9 +3125,9 @@ function showPasswordMessage(isCorrect) {
   messageDiv.style.textAlign = 'center';
   
   if (isCorrect) {
-    messageDiv.innerHTML = "Correct! Password accepted. Door is open.";
+    messageDiv.innerHTML = "¡Correcto! Contraseña aceptada. La puerta está abierta.";
   } else {
-    messageDiv.innerHTML = "Wrong password! Try again.";
+    messageDiv.innerHTML = "¡Contraseña incorrecta! Inténtalo de nuevo.";
   }
 
   document.body.appendChild(messageDiv);
@@ -3110,7 +3188,7 @@ function quitInteraction() {
 // Update the interaction UI based on proximity to the device
 function updateInteractionUI() {
   if (passwordDevice && isNearDevice() && !isInteracting && !deviceInteracted) {
-    interactionUI.innerHTML = "Press E to Interact with the Device Manager";  // Show message when near
+    interactionUI.innerHTML = "Presiona E para usar la terminal de acceso";  // Show message when near
   } else if (!isNearDevice() || deviceInteracted) {
     interactionUI.innerHTML = "";  // Hide message when not near or already interacted
   }
@@ -3227,7 +3305,7 @@ if (waterRising) {
 
   // Player's distance to the password device
   if (isNearDevice() && !isInteracting) {
-    interactionUI.innerHTML = "Press E to Interact with the Device Manager"; // Prompt to interact
+    interactionUI.innerHTML = "Presiona E para usar la terminal de acceso"; // Prompt to interact
   }
 
   renderer.render(scene, camera);

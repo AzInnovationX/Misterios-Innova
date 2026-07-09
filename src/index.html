@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ᖴᒪOOᗪEᗩᗪ</title>
+    <title>Misterios Innova</title>
     <link rel="icon" type="image/png" href="./LOGO.png">
     
     <style>
@@ -16,7 +16,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #1e1e1e;
+            background-color: #030508;
             cursor: pointer; /* Default cursor */
         }
         body.pointerLockActive {
@@ -24,31 +24,39 @@
         }
         #controls {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            display: none; /* Shown programmatically after login */
+            gap: 10px;
         }
-        button {
-            display: none;
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
+        .hud-btn {
+            background: rgba(15, 22, 36, 0.7);
+            border: 1.5px solid rgba(145, 172, 173, 0.5);
+            backdrop-filter: blur(10px);
+            color: #91acad;
+            padding: 10px 18px;
+            font-size: 13px;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+            display: none; /* Managed by JS role detection */
         }
-        button:hover {
-            background-color: #555;
-        }
-        button:focus {
-            outline: none;
+        .hud-btn:hover {
+            background: rgba(145, 172, 173, 0.15);
+            border-color: #b7d2d3;
+            color: #b7d2d3;
+            text-shadow: 0 0 5px rgba(183, 210, 211, 0.5);
         }
         #webgl-container {
             width: 100%;
             height: 100%;
-            z-index: -12;
+            z-index: 1;
+            display: none; /* Shown after login */
         }
         #damage-overlay {
             position: fixed;
@@ -64,7 +72,7 @@
             opacity: 0;
             pointer-events: none; /* Ensure it doesn't block user interaction */
             transition: opacity 0.1s ease-in-out; /* Smooth fading effect */
-            z-index: -1;
+            z-index: 2;
         }
         .note {
             position: absolute;
@@ -72,12 +80,14 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 10px 20px;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.75);
+            border: 1px solid rgba(145, 172, 173, 0.4);
             color: white;
             font-size: 18px;
             border-radius: 5px;
             display: none; 
             z-index: 10; 
+            font-family: 'Courier New', Courier, monospace;
         }
         #key-image-container {
             position: fixed;   
@@ -150,31 +160,198 @@
             max-width: 80%;
             max-height: 80%;
         }
+
+        /* Firebase Login CSS */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #0d121d 0%, #030508 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease-in-out;
+        }
+        .login-card {
+            background: rgba(15, 22, 36, 0.7);
+            border: 1.5px solid rgba(145, 172, 173, 0.3);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            text-align: center;
+            color: #e0e6ed;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .login-card h2 {
+            font-size: 32px;
+            letter-spacing: 4px;
+            color: #ff4d4d;
+            text-shadow: 0 0 10px rgba(255, 77, 77, 0.5);
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .login-subtitle {
+            font-size: 14px;
+            color: #91acad;
+            margin-bottom: 25px;
+            font-style: italic;
+        }
+        .login-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #b0c4de;
+            margin-bottom: 30px;
+        }
+        #google-login-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            color: #1f2937;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-family: sans-serif;
+        }
+        #google-login-btn:hover {
+            background-color: #f3f4f6;
+            transform: translateY(-1px);
+        }
+        #google-login-btn:active {
+            transform: translateY(1px);
+        }
+        .google-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+
+        /* User Profile HUD CSS */
+        #user-profile-hud {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            display: none; /* Shown programmatically after login */
+            align-items: center;
+            background: rgba(15, 22, 36, 0.7);
+            border: 1.5px solid rgba(145, 172, 173, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #e0e6ed;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
+        }
+        #user-profile-hud img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 1.5px solid #91acad;
+        }
+        #user-profile-hud .user-info {
+            display: flex;
+            flex-direction: column;
+            margin-right: 15px;
+        }
+        #user-profile-hud .user-name {
+            font-size: 13px;
+            font-weight: bold;
+        }
+        #user-profile-hud .user-role {
+            font-size: 10px;
+            color: #91acad;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        #user-profile-hud .user-role.admin {
+            color: #ff4d4d;
+            text-shadow: 0 0 3px rgba(255, 77, 77, 0.3);
+        }
+        #user-profile-hud .logout-btn {
+            background-color: transparent;
+            color: #ff4d4d;
+            border: 1.5px solid rgba(255, 77, 77, 0.4);
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+        }
+        #user-profile-hud .logout-btn:hover {
+            background-color: rgba(255, 77, 77, 0.1);
+            border-color: #ff4d4d;
+            color: #ff4d4d;
+        }
     </style>
 </head>
 <body>
+    <!-- Firebase Login Screen -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>MISTERIOS INNOVA</h2>
+            <p class="login-subtitle">Una experiencia inmersiva de supervivencia y terror en 3D</p>
+            <p class="login-desc">Te encuentras atrapado en una oficina inundada tras un cataclismo. Encuentra la tarjeta de acceso y escapa antes de que la criatura te encuentre. Para comenzar, inicia sesión con tu cuenta de Google.</p>
+            <button id="google-login-btn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.85 2.99c.9-2.7 3.41-4.51 6.76-4.51z"/>
+                    <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.35H12v4.51h6.48c-.29 1.48-1.14 2.73-2.4 3.58l3.76 2.91c2.2-2.02 3.65-5 3.65-8.65z"/>
+                    <path fill="#FBBC05" d="M5.24 14.73c-.24-.72-.38-1.47-.38-2.23s.14-1.51.38-2.23L1.39 7.28C.5 9.07 0 11.01 0 13s.5 3.93 1.39 5.72l3.85-2.99z"/>
+                    <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.76-2.91c-1.1.74-2.5 1.18-4.2 1.18-3.35 0-5.86-1.81-6.76-4.51L1.39 16.84C3.37 20.33 7.35 23 12 23z"/>
+                </svg>
+                Iniciar sesión con Google
+            </button>
+            <div id="login-error-msg" style="color: #ff4d4d; margin-top: 15px; font-family: sans-serif; font-size: 14px; display: none;"></div>
+            <div id="login-status-msg" style="color: #4aff4a; margin-top: 15px; font-family: sans-serif; font-size: 14px; display: none;"></div>
+        </div>
+    </div>
+
+    <!-- User Profile HUD -->
+    <div id="user-profile-hud">
+        <img id="user-avatar" src="" alt="Avatar">
+        <div class="user-info">
+            <span id="user-display-name" class="user-name">Usuario</span>
+            <span id="user-role-label" class="user-role">Jugador</span>
+        </div>
+        <button id="logout-hud-btn" class="logout-btn">Cerrar Sesión</button>
+    </div>
+
     <!-- WebGL Rendering Container -->
     <div id="webgl-container"></div>
 
-
-       <!-- Preload screen with image -->
-       <div id="preload-screen">
+    <!-- Preload screen with image -->
+    <div id="preload-screen">
         <img id="preload-image" src="./PRESENTATION2.png" alt="Preloading Image" />
     </div>
 
     <!-- Game Mode Controls -->
     <div id="controls">
-        <button id="firstPersonBtn">Enter First Person Mode</button>
-        <button id="editModeBtn">Enter Edit Mode</button>
-        
+        <button id="firstPersonBtn" class="hud-btn">Entrar en Modo Primera Persona</button>
+        <button id="editModeBtn" class="hud-btn">Entrar en Modo Edición</button>
     </div>
 
     <!-- Damage Overlay (Visible when the player takes damage) -->
     <div id="damage-overlay"></div>
 
     <!-- Interaction Notes -->
-    <div id="key-collect-note" class="note" style="display: none;">Press C to collect the key</div>
-    <div id="door-open-note" class="note" style="display: none;">Press E to unlock the door</div>
+    <div id="key-collect-note" class="note" style="display: none;">Presiona C para recoger la tarjeta</div>
+    <div id="door-open-note" class="note" style="display: none;">Presiona E para abrir la puerta</div>
+    <div id="no-key-note" class="note" style="display: none;">¡Necesitas la tarjeta de acceso para abrir la puerta!</div>
     
     <!-- Key Image Container (Shown after the key is collected) -->
     <div id="key-image-container" style="display: none;">
@@ -183,7 +360,7 @@
 
     <!-- Inventory -->
     <div class="inventory">
-        <h1>INVENTORY</h1>
+        <h1>INVENTARIO</h1>
     </div>
     <div class="inventory2">
         <img src="./images/pics/candleinventory.png" alt="">
