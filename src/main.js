@@ -378,8 +378,8 @@ function checkPlayerBounds(playerPosition) {
 }
 
 function resetPlayerPosition() {
-  // Set the player's position to a safe location
-  camera.position.set(39, -1,-21); // Example reset position
+  // Set the player's position to a safe location inside boundaries (y >= 0)
+  camera.position.set(39, 5, -21); // Fixed Y coordinate to 5 instead of -1
   console.log("You have been reset to a safe location!"); // Console message
 }
 //================================================================
@@ -397,6 +397,189 @@ document.getElementById('webgl-container').appendChild(renderer.domElement);
 
 
 const textureLoader = new THREE.TextureLoader();
+
+//================================================================
+// First-Person Knife (Weapon Defense) Setup
+//================================================================
+const knifeGroup = new THREE.Group();
+
+// Wood Handle
+const handleGeo = new THREE.BoxGeometry(0.02, 0.02, 0.12);
+const handleMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.8 }); // Brown wood
+const handleMesh = new THREE.Mesh(handleGeo, handleMat);
+handleMesh.position.set(0, 0, 0);
+knifeGroup.add(handleMesh);
+
+// Metal Blade
+const bladeGeo = new THREE.BoxGeometry(0.008, 0.04, 0.2);
+const bladeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.9, roughness: 0.15 }); // Silver metal
+const bladeMesh = new THREE.Mesh(bladeGeo, bladeMat);
+bladeMesh.position.set(0, 0.01, -0.15); // Extends forward
+knifeGroup.add(bladeMesh);
+
+// Position knife in camera view (bottom right of screen)
+knifeGroup.position.set(0.25, -0.25, -0.5);
+// Rotate slightly so it points naturally forward/left
+knifeGroup.rotation.set(0.2, -0.3, 0);
+camera.add(knifeGroup);
+scene.add(camera); // Ensure camera is added to scene so its children render
+
+// Knife attack parameters
+let isKnifeAttacking = false;
+let zombieHealth = 3;
+let zombieStunned = false;
+
+window.performKnifeSlash = function() {
+  if (isKnifeAttacking || gameOverState) return;
+  isKnifeAttacking = true;
+  
+  const originalPos = knifeGroup.position.clone();
+  const originalRot = knifeGroup.rotation.clone();
+  
+  // Slash Animation (TWEEN)
+  // Swing forward & down
+  new TWEEN.Tween(knifeGroup.position)
+    .to({ x: originalPos.x - 0.1, y: originalPos.y + 0.08, z: originalPos.z - 0.15 }, 100)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .chain(
+      new TWEEN.Tween(knifeGroup.position)
+        .to({ x: originalPos.x, y: originalPos.y, z: originalPos.z }, 150)
+        .easing(TWEEN.Easing.Quadratic.In)
+        .onComplete(() => {
+          isKnifeAttacking = false;
+        })
+    )
+    .start();
+
+  new TWEEN.Tween(knifeGroup.rotation)
+    .to({ x: originalRot.x - 0.5, y: originalRot.y + 0.4, z: originalRot.z - 0.8 }, 100)
+    .easing(TWEEN.Easing.Quadratic.Out)
+    .chain(
+      new TWEEN.Tween(knifeGroup.rotation)
+        .to({ x: originalRot.x, y: originalRot.y, z: originalRot.z }, 150)
+        .easing(TWEEN.Easing.Quadratic.In)
+    )
+    .start();
+
+  // Attack check
+  checkKnifeHit();
+}
+
+function checkKnifeHit() {
+  if (!zombie || zombieStunned || gameOverState) return;
+  
+  const playerPos = camera.position;
+  const zombiePos = zombie.position;
+  
+  // Calculate distance
+  const distance = playerPos.distanceTo(zombiePos);
+  
+  // If close enough (within range of 6 units)
+  if (distance < 6.0) {
+    // Check if player is looking towards the zombie (dot product of direction vectors)
+    const playerDirection = new THREE.Vector3();
+    camera.getWorldDirection(playerDirection);
+    
+    const toZombieDir = new THREE.Vector3().subVectors(zombiePos, playerPos).normalize();
+    const dot = playerDirection.dot(toZombieDir);
+    
+    // dot > 0.5 means the zombie is in front of the player
+    if (dot > 0.5) {
+      zombieHealth--;
+      
+      // Visual feedback: brief damage flash on screen (opacity 0.3 for 150ms)
+      const damageOverlay = document.getElementById('damage-overlay');
+      if (damageOverlay) {
+        damageOverlay.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'; // Flash white/silver for blade hit
+        damageOverlay.style.opacity = '0.3';
+        setTimeout(() => {
+          damageOverlay.style.opacity = '0';
+          damageOverlay.style.backgroundColor = 'rgba(255, 0, 0, 0.4)'; // Reset back to red for zombie attacks
+        }, 150);
+      }
+      
+      // Play zombie pain / growl sound by pausing and playing zombieSound2
+      if (zombieSound2) {
+        zombieSound2.currentTime = 0;
+        zombieSound2.play();
+      }
+      
+      if (zombieHealth <= 0) {
+        // Zombie defeated! Stun / disable him for 15 seconds
+        zombieStunned = true;
+        zombieHealth = 3; // Reset health for later
+        
+        // Hide zombie mesh
+        zombie.visible = false;
+        
+        // Show notification overlay
+        const note = document.createElement('div');
+        note.style.position = 'fixed';
+        note.style.top = '25%';
+        note.style.left = '50%';
+        note.style.transform = 'translate(-50%, -50%)';
+        note.style.color = '#4aff4a';
+        note.style.fontSize = '24px';
+        note.style.fontWeight = 'bold';
+        note.style.fontFamily = 'Courier New, Courier, monospace';
+        note.style.backgroundColor = 'rgba(15,22,36,0.85)';
+        note.style.padding = '12px 24px';
+        note.style.borderRadius = '6px';
+        note.style.border = '1.5px solid #4aff4a';
+        note.style.zIndex = '2000';
+        note.innerHTML = "¡CRIATURA DERROTADA!<br><span style='font-size: 14px; color: #ff4d4d;'>Reaparecerá en 15 segundos...</span>";
+        note.style.textAlign = 'center';
+        document.body.appendChild(note);
+        
+        // Push back zombie to spawning location (0, 5, 0)
+        zombie.position.set(0, 5, 0);
+        
+        setTimeout(() => {
+          if (note.parentNode) document.body.removeChild(note);
+        }, 3000);
+        
+        // Respawn after 15 seconds
+        setTimeout(() => {
+          if (zombie) {
+            zombie.visible = true;
+            zombieStunned = false;
+            if (zombieSound1) zombieSound1.play();
+          }
+        }, 15000);
+      } else {
+        // Just stunned/pushed back briefly (1.5 seconds)
+        zombieStunned = true;
+        
+        // Push zombie back on the vector away from player
+        const pushVector = new THREE.Vector3().subVectors(zombiePos, playerPos).setY(0).normalize();
+        zombie.position.addScaledVector(pushVector, 6.0); // Push back 6 units!
+        
+        const note = document.createElement('div');
+        note.style.position = 'fixed';
+        note.style.top = '25%';
+        note.style.left = '50%';
+        note.style.transform = 'translate(-50%, -50%)';
+        note.style.color = '#ff4d4d';
+        note.style.fontSize = '20px';
+        note.style.fontWeight = 'bold';
+        note.style.fontFamily = 'Courier New, Courier, monospace';
+        note.style.backgroundColor = 'rgba(15,22,36,0.8)';
+        note.style.padding = '8px 16px';
+        note.style.borderRadius = '6px';
+        note.style.border = '1px solid #ff4d4d';
+        note.style.zIndex = '2000';
+        note.textContent = "¡CRIATURA HERIDA! ¡RETROCEDE!";
+        document.body.appendChild(note);
+        
+        setTimeout(() => {
+          if (note.parentNode) document.body.removeChild(note);
+          zombieStunned = false;
+        }, 1500);
+      }
+    }
+  }
+}
+
 
 //================================================================
 // Fog Setup
@@ -1072,11 +1255,11 @@ class FPSControls {
       scene.add(this.pointerLockControls.getObject()); // Use getObject()
 
       // Fixed: only lock pointer if the user has signed in and not on mobile.
-      // If already locked on PC, click toggles the flashlight.
+      // If already locked on PC, click triggers a knife attack to defend yourself.
       document.addEventListener('click', () => {
         if (currentUser && !isMobile) {
           if (this.pointerLockControls.isLocked) {
-            document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyF' }));
+            performKnifeSlash();
           } else {
             this.pointerLockControls.lock();
           }
@@ -1157,6 +1340,7 @@ class FPSControls {
     // Activates pointer lock controls when the button is clicked
     this.pointerLockControls.lock(); // This will activate the pointer lock
     this.isEditMode = false; // Disable edit mode when entering first-person view
+    this.pointerLockControls.getObject().position.set(39, 5, -21); // Set proper spawn height inside bounds
   }
 
   enterEditMode() {
@@ -1772,7 +1956,7 @@ function isPlayerLookingAtZombie({ fovCos = Math.cos(THREE.MathUtils.degToRad(35
 }
 
 function updateZombie(delta) {
-  if (zombie) {
+  if (zombie && !zombieStunned) {
     if (isPlayerLookingAtZombie()) {
       if (mixer) mixer.timeScale = 0;
       console.log(`[ZOMBIE] FROZEN — player is looking | dist: ${camera.position.distanceTo(zombie.position).toFixed(2)}`);
@@ -3683,6 +3867,13 @@ if (isMobile) {
     if (controls && controls.isStanding) {
       controls.velocity.y += 12;
       controls.isStanding = false;
+    }
+  });
+  
+  document.getElementById('mobile-attack-btn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (typeof performKnifeSlash === 'function') {
+      performKnifeSlash();
     }
   });
   
