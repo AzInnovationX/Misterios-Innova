@@ -227,6 +227,34 @@ function resetSceneForNextLevel() {
   }
 }
 
+//================================================================
+// Mission HUD Tracker & Hints System
+//================================================================
+function updateMissionHUD() {
+  const missionText = document.getElementById('mission-text');
+  const missionHint = document.getElementById('mission-hint');
+  const missionHUD = document.getElementById('mission-hud');
+  
+  if (!missionText || !missionHint || !missionHUD) return;
+  
+  missionHUD.style.display = 'block';
+  
+  if (!hasKey) {
+    missionText.textContent = "ENCUENTRA LA TARJETA DE ACCESO";
+    missionHint.textContent = "Pista: Explora las mesas de la oficina. Hay una tarjeta magnética brillante.";
+  } else if (!doorOpen) {
+    missionText.textContent = "ABRE LA PUERTA DE LA OFICINA";
+    missionHint.textContent = "Pista: Camina cerca de la puerta de vidrio con marco azul para abrirla usando tu tarjeta.";
+  } else if (!deviceInteracted) {
+    missionText.textContent = "ABRE LA BÓVEDA CON LA TERMINAL";
+    missionHint.textContent = "Pista: Encuentra la terminal (caja con luz verde). Introduce la contraseña (1532) que viste en la nota.";
+  } else {
+    missionText.textContent = "¡ESCAPA A LA ZONA DE EVACUACIÓN!";
+    missionHint.textContent = "Pista: Corre hacia la luz roja al final del pasillo (punto de evacuación de rescate).";
+  }
+}
+
+
 
 
 // Global controls and sound variables
@@ -300,6 +328,10 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('user-profile-hud').style.display = 'flex';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('webgl-container').style.display = 'block';
+    
+    // Hide auth checking screen
+    const loader = document.getElementById('auth-loading-screen');
+    if (loader) loader.style.display = 'none';
   } else {
     currentUser = null;
     isAdminUser = false;
@@ -320,6 +352,10 @@ onAuthStateChanged(auth, (user) => {
     if (pointerLockControls && pointerLockControls.isLocked) {
       pointerLockControls.unlock();
     }
+    
+    // Hide auth checking screen
+    const loader = document.getElementById('auth-loading-screen');
+    if (loader) loader.style.display = 'none';
   }
 });
 
@@ -3803,6 +3839,7 @@ function animate() {
 
   checkProximityToKey(playerPosition);
   checkProximityToDoor(playerPosition);
+  updateMissionHUD();
 
   // Proximity checks are handled automatically above
 
